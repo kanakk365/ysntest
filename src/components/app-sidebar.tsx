@@ -56,11 +56,6 @@ const data = {
       url: "#settings",
       icon: IconSettings,
     },
-    {
-      title: "Logout",
-      url: "#logout",
-      icon: IconLogout,
-    },
   ],
 }
 

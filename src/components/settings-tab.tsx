@@ -142,7 +142,12 @@ export function SettingsTab() {
             
             <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
               <DialogTrigger asChild>
-                <Button className="cursor-pointer" variant="outline">Change Password</Button>
+                <Button 
+                  className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground border-primary" 
+                  variant="default"
+                >
+                  Change Password
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>

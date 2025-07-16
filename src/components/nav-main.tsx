@@ -52,23 +52,6 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-            >
-              <IconCirclePlusFilled />
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <IconMail />
-              <span className="sr-only">Inbox</span>
-            </Button>
-          </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
           {items.map((item) => {
@@ -87,10 +70,10 @@ export function NavMain({
                 <SidebarMenuButton 
                   tooltip={item.title}
                   onClick={() => handleItemClick(item)}
-                  className={isActive ? "bg-accent text-accent-foreground" : ""}
+                  className={isActive ? "bg-accent text-accent-foreground cursor-pointer " : "cursor-pointer"}
                 >
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+                  {item.icon && <item.icon className="size-5" />}
+                  <span className="text-base font-medium">{item.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )
