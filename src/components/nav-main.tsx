@@ -1,6 +1,7 @@
 "use client"
 
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { useDashboard } from "@/contexts/dashboard-context"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,8 +19,35 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    isActive?: boolean
   }[]
 }) {
+  const { activeTab, setActiveTab } = useDashboard()
+
+  const handleItemClick = (item: { title: string; url: string }) => {
+    // Handle logout separately
+    if (item.title === "Logout") {
+      // Add logout logic here
+      console.log("Logging out...")
+      // You can add your logout logic here
+      return
+    }
+    
+    // Map sidebar items to tab names
+    const tabMap: { [key: string]: "dashboard" | "profile" | "opponents" | "coaches" | "settings" } = {
+      "Dashboard": "dashboard",
+      "My Profile": "profile",
+      "Opponent Teams": "opponents",
+      "Coaches": "coaches",
+      "Settings": "settings"
+    }
+    
+    const tabName = tabMap[item.title]
+    if (tabName) {
+      setActiveTab(tabName)
+    }
+  }
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -43,14 +71,30 @@ export function NavMain({
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            const tabMap: { [key: string]: string } = {
+              "Dashboard": "dashboard",
+              "My Profile": "profile",
+              "Opponent Teams": "opponents",
+              "Coaches": "coaches",
+              "Settings": "settings"
+            }
+            const tabName = tabMap[item.title]
+            const isActive = activeTab === tabName
+            
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton 
+                  tooltip={item.title}
+                  onClick={() => handleItemClick(item)}
+                  className={isActive ? "bg-accent text-accent-foreground" : ""}
+                >
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
