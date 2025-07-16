@@ -8,9 +8,20 @@ import { NavBar } from './AnimatedNavbar'
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
+
+  // Function to handle search closing with animation
+  const handleSearchClose = () => {
+    setIsClosing(true)
+    setTimeout(() => {
+      setIsSearchOpen(false)
+      setIsClosing(false)
+      setSearchQuery('')
+    }, 300) // Wait for exit animation to complete
+  }
 
   useEffect(() => {
     const checkMobile = () => {
@@ -32,51 +43,97 @@ export default function Navbar() {
   ]
 
   // Desktop Search Component
-  const DesktopSearch = () => (
-    <div className="relative w-10 h-10 flex items-center">
-      <button 
-        className={` cursor-pointer absolute left-3 z-20 transition-opacity duration-300 ${
-          isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        onClick={() => setIsSearchOpen(!isSearchOpen)}
-      >
-        <Search className="w-5 h-5 text-gray-500" />
-      </button>
-      
-      {/* Search Input Container - Absolutely positioned to not affect layout */}
-      <div className={`absolute right-0 top-0 z-10 transition-all duration-500 ease-in-out ${
-        isSearchOpen ? 'w-40 opacity-100' : 'w-0 opacity-0'
-      } overflow-hidden`}>
-        <div className="relative flex items-center w-40">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="bg-black text-white text-sm border border-purple-500 focus:border-purple-500 outline-purple-500 ring-none rounded-full pl-10 pr-10 py-1.5 shadow-md focus:outline-none w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button 
-            className="absolute right-3 z-10"
-            onClick={() => {
-              setIsSearchOpen(false)
-              setSearchQuery('')
-            }}
-          >
-            <X className="w-5 h-5 text-gray-500 cursor-pointer" />
-          </button>
-        </div>
-      </div>
+  const DesktopSearch = () => {
+    const searchRef = React.useRef<HTMLDivElement>(null)
 
-      {/* Search Results Dropdown */}
-      <ul className={`bg-gray-900 mt-1 rounded-lg shadow-lg overflow-y-scroll scrollbar-thin scrollbar-thumb-custom scrollbar z-10 absolute w-40 right-0 top-12 transition-all duration-500 ease-in-out ${
-        isSearchOpen && searchQuery ? 'opacity-100 visible' : 'opacity-0 invisible'
-      }`}>
-        <div className="flex items-center justify-center h-[100px] rounded-2xl">
-          <p className="text-sm text-white opacity-50">No Results Found</p>
-        </div>
-      </ul>
-    </div>
-  )
+    // Close search when clicking outside
+    React.useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+          handleSearchClose()
+        }
+      }
+
+      if (isSearchOpen) {
+        document.addEventListener('mousedown', handleClickOutside)
+      }
+
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    })
+
+    return (
+      <div className="relative w-10 h-10 flex items-center" ref={searchRef}>
+        <motion.button 
+          className="cursor-pointer absolute left-3 z-20"
+          initial={false}
+          animate={isSearchOpen && !isClosing ? { opacity: 0, scale: 0.75 } : { opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: "easeInOut", delay: !isSearchOpen ? 0.2 : 0 }}
+          style={{ pointerEvents: isSearchOpen ? 'none' : 'auto' }}
+          onClick={() => setIsSearchOpen(true)}
+        >
+          <Search className="w-5 h-5 text-gray-500" />
+        </motion.button>
+        
+        {/* Search Input Container - Absolutely positioned to not affect layout */}
+        <motion.div 
+          className="absolute right-0 top-0 z-10 overflow-hidden"
+          initial={{ width: 0, opacity: 0 }}
+          animate={isSearchOpen && !isClosing ? { width: 160, opacity: 1 } : { width: 0, opacity: 0 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+        >
+          <AnimatePresence mode="wait">
+            {isSearchOpen && (
+              <motion.div 
+                className="relative flex items-center w-40"
+                initial={{ scale: 0.9, opacity: 0, x: 20 }}
+                animate={!isClosing ? { scale: 1, opacity: 1, x: 0 } : { scale: 0.9, opacity: 0, x: 20 }}
+                exit={{ scale: 0.9, opacity: 0, x: 20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="bg-black text-white text-sm border border-purple-500 focus:border-purple-500 outline-purple-500 ring-none rounded-full pl-10 pr-10 py-1.5 shadow-md focus:outline-none w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                <motion.button 
+                  className="absolute right-3 z-10"
+                  initial={{ opacity: 0, scale: 0.5, rotate: 180 }}
+                  animate={!isClosing ? { opacity: 1, scale: 1, rotate: 0 } : { opacity: 0, scale: 0.5, rotate: 180 }}
+                  exit={{ opacity: 0, scale: 0.5, rotate: 180 }}
+                  transition={{ duration: 0.3, ease: "easeInOut", delay: !isClosing && isSearchOpen ? 0.1 : 0 }}
+                  onClick={handleSearchClose}
+                >
+                  <X className="w-5 h-5 text-gray-500 cursor-pointer" />
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Search Results Dropdown */}
+        <AnimatePresence>
+          {isSearchOpen && searchQuery && (
+            <motion.ul 
+              className="bg-gray-900 mt-1 rounded-lg shadow-lg overflow-y-scroll scrollbar-thin scrollbar-thumb-custom scrollbar z-10 absolute w-40 right-0 top-12"
+              initial={{ opacity: 0, scale: 0.95, y: -8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -8 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <div className="flex items-center justify-center h-[100px] rounded-2xl">
+                <p className="text-sm text-white opacity-50">No Results Found</p>
+              </div>
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
 
   // Desktop Auth Buttons
   const DesktopAuth = () => (
