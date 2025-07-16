@@ -160,4 +160,37 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+  
+  /* Dashboard scrollbar styling - Dark theme */
+  .dashboard-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--background);
+  }
+  
+  .dashboard-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .dashboard-scrollbar::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  
+  .dashboard-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  }
+  
+  .dashboard-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  }
+  
+  .dashboard-scrollbar::-webkit-scrollbar-corner {
+    background: var(--background);
+  }
 }

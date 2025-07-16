@@ -11,10 +11,10 @@ import {
 export default function Home() {
   return (
     <DashboardProvider>
-      <div className="bg-black min-h-screen" >
+      <div className="bg-black min-h-screen flex flex-col" >
         <Navbar/>
-        <div className="dashboard-container -mt-20 overflow-hidden relative  ">
-          <div className="flex h-full">
+        <div className="dashboard-container -mt-20 overflow-hidden relative flex-1">
+          <div className="flex h-screen">
             <SidebarProvider
               className="flex h-full"
               style={
@@ -26,10 +26,10 @@ export default function Home() {
             >
               <div className="flex h-full w-full">
                 <AppSidebar variant="sidebar" />
-                <SidebarInset className="flex-1 h-full overflow-auto">
+                <SidebarInset className="flex-1 h-full flex flex-col overflow-hidden">
                   <SiteHeader />
-                  <div className="flex flex-1 flex-col">
-                    <div className="@container/main flex flex-1 flex-col gap-2">
+                  <div className="flex-1 dashboard-scrollbar overflow-auto">
+                    <div className="@container/main">
                       <div className="px-4 lg:px-6 py-4">
                         <DashboardTabs />
                       </div>

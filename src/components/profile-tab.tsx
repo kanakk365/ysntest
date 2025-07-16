@@ -26,8 +26,8 @@ export function ProfileTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6 h-full">
+      <Card className="h-full flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
@@ -43,7 +43,7 @@ export function ProfileTab() {
             Manage your personal information and profile settings
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 flex-1 overflow-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -102,15 +102,15 @@ export function ProfileTab() {
           <div className="flex justify-end gap-2">
             {isEditing ? (
               <>
-                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                <Button className="cursor-pointer" variant="outline" onClick={() => setIsEditing(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSave}>
+                <Button className="cursor-pointer" onClick={handleSave}>
                   Save Changes
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)}>
+              <Button className="cursor-pointer" onClick={() => setIsEditing(true)}>
                 Edit Profile
               </Button>
             )}

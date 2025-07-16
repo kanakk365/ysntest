@@ -29,7 +29,7 @@ export function DashboardTabs() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       {renderContent()}
     </div>
   )

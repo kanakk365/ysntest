@@ -47,15 +47,15 @@ export function SettingsTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6 h-full">
+      <Card className="h-full flex flex-col">
         <CardHeader>
           <CardTitle>Organization Settings</CardTitle>
           <CardDescription>
             Manage your organization preferences and streaming settings
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 flex-1 overflow-auto">
           <div className="space-y-2">
             <Label htmlFor="orgName">Organization Name</Label>
             <Input
@@ -142,7 +142,7 @@ export function SettingsTab() {
             
             <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">Change Password</Button>
+                <Button className="cursor-pointer" variant="outline">Change Password</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -180,10 +180,10 @@ export function SettingsTab() {
                     />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+                    <Button className="cursor-pointer" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleChangePassword}>
+                    <Button className="cursor-pointer" onClick={handleChangePassword}>
                       Change Password
                     </Button>
                   </div>
@@ -193,7 +193,7 @@ export function SettingsTab() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleSaveSettings}>
+            <Button className="cursor-pointer" onClick={handleSaveSettings}>
               Save Settings
             </Button>
           </div>

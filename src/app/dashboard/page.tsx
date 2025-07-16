@@ -14,30 +14,35 @@ import data from "./data.json"
 export default function Page() {
   return (
     <DashboardProvider>
-      <SidebarProvider
-        style={
-          {
-            "--sidebar-width": "calc(var(--spacing) * 72)",
-            "--header-height": "calc(var(--spacing) * 12)",
-          } as React.CSSProperties
-        }
-      >
-        <AppSidebar variant="inset" />
-        <SidebarInset>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                <SectionCards />
-                <div className="px-4 lg:px-6">
-                  <ChartAreaInteractive />
+      <div className="h-screen">
+        <SidebarProvider
+          className="flex h-full"
+          style={
+            {
+              "--sidebar-width": "calc(var(--spacing) * 72)",
+              "--header-height": "calc(var(--spacing) * 12)",
+            } as React.CSSProperties
+          }
+        >
+          <div className="flex h-full w-full">
+            <AppSidebar variant="inset" />
+            <SidebarInset className="flex-1 h-full flex flex-col overflow-hidden">
+              <SiteHeader />
+              <div className="flex-1 overflow-auto">
+                <div className="@container/main">
+                  <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                    <SectionCards />
+                    <div className="px-4 lg:px-6">
+                      <ChartAreaInteractive />
+                    </div>
+                    <DataTable data={data} />
+                  </div>
                 </div>
-                <DataTable data={data} />
               </div>
-            </div>
+            </SidebarInset>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
+        </SidebarProvider>
+      </div>
     </DashboardProvider>
   )
 }

@@ -171,7 +171,7 @@ export default function Navbar() {
           />
           {searchQuery && (
             <button 
-              className="absolute right-3 z-10"
+              className="absolute right-3 z-10 cursor-pointer"
               onClick={() => setSearchQuery('')}
             >
               <X className="w-5 h-5 text-gray-500 cursor-pointer" />
@@ -226,7 +226,7 @@ export default function Navbar() {
       {/* Desktop Navigation */}
       <div className="w-[40rem] relative flex items-center justify-center ml-10 z-40">
         <div 
-          className="absolute  bg-black top-[-7rem] inset-0 h-[15rem] [transform:perspective(500px)_rotateX(-60deg)] rounded-b-[3rem]"
+          className="absolute  bg-black top-[-7.5rem] inset-0 h-[15rem] [transform:perspective(500px)_rotateX(-60deg)] rounded-b-[2rem]"
           style={{
             boxShadow: '0px -25px 50px 22px rgba(0, 0, 0, 0.8), 0 0 0 3px rgba(61, 22, 124, 1), 0 10px 15px rgba(55, 5, 220, 0.9)'
           }}
@@ -264,7 +264,7 @@ export default function Navbar() {
       <div className="flex items-center justify-center z-20">
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="relative w-10 h-10 flex items-center justify-center focus:outline-none"
+          className="relative w-10 h-10 flex items-center justify-center focus:outline-none cursor-pointer"
         >
           {/* Animated Hamburger/X Icon */}
           <div className="w-6 h-6 relative">
