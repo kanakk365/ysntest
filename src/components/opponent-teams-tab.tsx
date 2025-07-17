@@ -112,27 +112,30 @@ export function OpponentTeamsTab() {
     <div className="space-y-6 h-full">
       <Card className="h-full flex flex-col">
         <CardHeader>
-          <CardTitle>Opponent Teams</CardTitle>
-          <CardDescription>
-            Manage your opponent teams and their information
-          </CardDescription>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search teams..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Opponent Teams</CardTitle>
+              <CardDescription>
+                Manage your opponent teams and their information
+              </CardDescription>
             </div>
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button  className="cursor-pointer" >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Team
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search teams..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className="cursor-pointer">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Team
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add New Team</DialogTitle>
@@ -173,6 +176,7 @@ export function OpponentTeamsTab() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col overflow-hidden">
@@ -201,9 +205,13 @@ export function OpponentTeamsTab() {
                     <TableCell>
                       <Badge
                         variant={
-                          team.status === "active" ? "default" : "secondary"
+                          team.status === "active" ? "default" : "outline"
                         }
-                        className="cursor-pointer text-center w-16 justify-center"
+                        className={`cursor-pointer text-center w-16 justify-center ${
+                          team.status === "inactive" 
+                            ? "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-200" 
+                            : ""
+                        }`}
                         onClick={() => toggleStatus(team.id)}
                       >
                         {team.status}

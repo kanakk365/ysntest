@@ -165,31 +165,34 @@ export function CoachesTab() {
     <div className="space-y-6 h-full">
       <Card className="h-full flex flex-col">
         <CardHeader>
-          <CardTitle>Coaches</CardTitle>
-          <CardDescription>
-            Manage your coaches and their information
-          </CardDescription>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search coaches..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Coaches</CardTitle>
+              <CardDescription>
+                Manage your coaches and their information
+              </CardDescription>
             </div>
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="cursor-pointer">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Coach
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Coach</DialogTitle>
-                </DialogHeader>
+            <div className="flex gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search coaches..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+                <DialogTrigger asChild>
+                  <Button className="cursor-pointer">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Coach
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Coach</DialogTitle>
+                  </DialogHeader>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -280,6 +283,7 @@ export function CoachesTab() {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col overflow-hidden">
@@ -326,9 +330,13 @@ export function CoachesTab() {
                     <TableCell>
                       <Badge
                         variant={
-                          coach.status === "active" ? "default" : "secondary"
+                          coach.status === "active" ? "default" : "outline"
                         }
-                        className="cursor-pointer text-center w-12 justify-center"
+                        className={`cursor-pointer text-center w-16 justify-center ${
+                          coach.status === "inactive" 
+                            ? "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-200" 
+                            : ""
+                        }`}
                         onClick={() => toggleStatus(coach.id)}
                       >
                         {coach.status}
@@ -348,12 +356,11 @@ export function CoachesTab() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          className="cursor-pointer "
-                          variant="destructive"
+                          className="cursor-pointer bg-transparent hover:bg-transparent"
                           size="sm"
                           onClick={() => handleDeleteCoach(coach.id)}
                         >
-                          <Trash2 className="h-4 w-4"  />
+                          <Trash2 className="h-4 w-4 text-red-700" />
                         </Button>
                       </div>
                     </TableCell>
