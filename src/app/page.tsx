@@ -13,10 +13,10 @@ export default function Home() {
     <DashboardProvider>
       <div className="bg-black min-h-screen flex flex-col" >
         <Navbar/>
-        <div className="dashboard-container  overflow-hidden relative flex-1">
-          <div className="flex h-screen">
+        <div className="dashboard-container relative flex-1">
+          <div className="flex">
             <SidebarProvider
-              className="flex h-full"
+              className="flex"
               style={
                 {
                   "--sidebar-width": "16rem",
@@ -24,11 +24,11 @@ export default function Home() {
                 } as React.CSSProperties
               }
             >
-              <div className="flex h-full w-full">
+              <div className="flex w-full">
                 <AppSidebar variant="sidebar" />
-                <SidebarInset className="flex-1 h-full flex flex-col overflow-hidden">
+                <SidebarInset className="flex-1 flex flex-col">
                   <SiteHeader />
-                  <div className="flex-1 dashboard-scrollbar overflow-auto">
+                  <div className="flex-1">
                     <div className="@container/main">
                       <div className="px-4 lg:px-6 py-4">
                         <DashboardTabs />

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -158,39 +159,40 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', var(--font-sans), sans-serif;
     letter-spacing: var(--tracking-normal);
   }
   
-  /* Dashboard scrollbar styling - Dark theme */
-  .dashboard-scrollbar {
+  /* Custom scrollbar styling for main page scroll */
+  body {
     scrollbar-width: thin;
     scrollbar-color: var(--primary) var(--background);
   }
   
-  .dashboard-scrollbar::-webkit-scrollbar {
+  body::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   
-  .dashboard-scrollbar::-webkit-scrollbar-track {
+  body::-webkit-scrollbar-track {
     background: var(--background);
     border-radius: 6px;
     border: 1px solid var(--border);
   }
   
-  .dashboard-scrollbar::-webkit-scrollbar-thumb {
+  body::-webkit-scrollbar-thumb {
     background: var(--primary);
     border-radius: 6px;
     border: 1px solid var(--border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   }
   
-  .dashboard-scrollbar::-webkit-scrollbar-thumb:hover {
+  body::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   }
   
-  .dashboard-scrollbar::-webkit-scrollbar-corner {
+  body::-webkit-scrollbar-corner {
     background: var(--background);
   }
 }

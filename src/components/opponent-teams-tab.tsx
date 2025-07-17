@@ -223,12 +223,11 @@ export function OpponentTeamsTab() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          className="cursor-pointer"
-                          variant="destructive"
+                          className="cursor-pointer bg-transparent hover:bg-transparent "
                           size="sm"
                           onClick={() => handleDeleteTeam(team.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-700 " />
                         </Button>
                       </div>
                     </TableCell>
