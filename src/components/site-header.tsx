@@ -1,6 +1,13 @@
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { NavUser } from "@/components/nav-user"
+import { NotificationIcon, MessageIcon } from "@/components/header-notifications"
+
+const userData = {
+  name: "John Doe",
+  email: "john@example.com",
+  avatar: "/avatars/user.jpg",
+}
 
 export function SiteHeader() {
   return (
@@ -11,6 +18,12 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
+        <div className="flex-1" />
+        <div className="flex items-center gap-4">
+          <NotificationIcon />
+          <MessageIcon />
+          <NavUser user={userData} />
+        </div>
       </div>
     </header>
   )

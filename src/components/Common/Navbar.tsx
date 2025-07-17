@@ -13,14 +13,13 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
 
-  // Function to handle search closing with animation
   const handleSearchClose = () => {
     setIsClosing(true)
     setTimeout(() => {
       setIsSearchOpen(false)
       setIsClosing(false)
       setSearchQuery('')
-    }, 300) // Wait for exit animation to complete
+    }, 300) 
   }
 
   useEffect(() => {
@@ -42,11 +41,9 @@ export default function Navbar() {
     { name: 'News', url: '/news', icon: Newspaper },
   ]
 
-  // Desktop Search Component
   const DesktopSearch = () => {
     const searchRef = React.useRef<HTMLDivElement>(null)
 
-    // Close search when clicking outside
     React.useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -76,17 +73,16 @@ export default function Navbar() {
           <Search className="w-5 h-5 text-gray-500" />
         </motion.button>
         
-        {/* Search Input Container - Absolutely positioned to not affect layout */}
         <motion.div 
           className="absolute right-0 top-0 z-10 overflow-hidden"
           initial={{ width: 0, opacity: 0 }}
-          animate={isSearchOpen && !isClosing ? { width: 160, opacity: 1 } : { width: 0, opacity: 0 }}
+          animate={isSearchOpen && !isClosing ? { width: 200, opacity: 1 } : { width: 0, opacity: 0 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
         >
           <AnimatePresence mode="wait">
             {isSearchOpen && (
               <motion.div 
-                className="relative flex items-center w-40"
+                className="relative flex items-center w-50"
                 initial={{ scale: 0.9, opacity: 0, x: 20 }}
                 animate={!isClosing ? { scale: 1, opacity: 1, x: 0 } : { scale: 0.9, opacity: 0, x: 20 }}
                 exit={{ scale: 0.9, opacity: 0, x: 20 }}
@@ -95,7 +91,7 @@ export default function Navbar() {
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="bg-black text-white text-sm border border-purple-500 focus:border-purple-500 outline-purple-500 ring-none rounded-full pl-10 pr-10 py-1.5 shadow-md focus:outline-none w-full"
+                  className="bg-black text-white text-sm border border-purple-500 focus:border-purple-500 outline-purple-500 ring-none rounded-full pl-4 pr-4 py-1.5 shadow-md focus:outline-none w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
@@ -375,17 +371,6 @@ export default function Navbar() {
           height={400} 
           className="w-full h-full object-cover pointer-events-none select-none"
         />
-      </div>
-      
-      {/* Hexa SVG below Navbar */}
-      <div className="w-full flex justify-center items-center mt-[-2rem] relative z-10">
-        {!isMobile && (
-          <Image src="/lefthexa.svg" alt="Hexa Background" width={352} height={296} className="pointer-events-none select-none -mr-20 " />
-        )}
-        <Image src="/hexa.svg" alt="Hexa Background" width={352} height={296} className="pointer-events-none select-none" />
-        {!isMobile && (
-          <Image src="/righthexa.svg" alt="Hexa Background" width={352} height={296} className="pointer-events-none select-none -ml-20 " />
-        )}
       </div>
     </header>
   )

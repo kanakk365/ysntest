@@ -13,7 +13,7 @@ export default function Home() {
     <DashboardProvider>
       <div className="bg-black min-h-screen flex flex-col" >
         <Navbar/>
-        <div className="dashboard-container -mt-20 overflow-hidden relative flex-1">
+        <div className="dashboard-container  overflow-hidden relative flex-1">
           <div className="flex h-screen">
             <SidebarProvider
               className="flex h-full"
