@@ -334,7 +334,7 @@ export function CoachesTab() {
                         }
                         className={`cursor-pointer text-center w-16 justify-center ${
                           coach.status === "inactive" 
-                            ? "bg-gray-200 text-gray-600 border-gray-300 hover:bg-gray-200" 
+                            ? "bg-gray-600 text-gray-300 border-gray-300 hover:bg-gray-500" 
                             : ""
                         }`}
                         onClick={() => toggleStatus(coach.id)}
