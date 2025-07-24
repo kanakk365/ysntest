@@ -29,9 +29,24 @@ import {
   Award
 } from "lucide-react"
 
+interface Player {
+  id: string
+  fullName: string
+  dob: string
+  grade: string
+  act: number
+  sat: number
+  gpa: number
+  position: string
+  state: string
+  rating: number
+  notes: string[]
+  labels: string[]
+}
+
 export function CoachesTab() {
   const { players, updatePlayerRating, addPlayerNote, addPlayerLabel } = useCoach()
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null)
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [newNote, setNewNote] = useState("")
   const [newLabel, setNewLabel] = useState("")
   const [showNoteDialog, setShowNoteDialog] = useState(false)

@@ -1,19 +1,18 @@
 "use client"
 
+import { CoachAppSidebar } from "@/components/coach-app-sidebar"
+import { CoachTabs } from "@/components/coach-tabs"
+import { SiteHeader } from "@/components/site-header"
+import { CoachProvider } from "@/contexts/coach-context"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-
-import { AppSidebar } from "@/components/app-sidebar"
-import { DashboardTabs } from "@/components/dashboard-tabs"
-import { SiteHeader } from "@/components/site-header"
-import { DashboardProvider } from "@/contexts/dashboard-context"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
-export default function Home() {
+export default function CoachDashboard() {
   const { user, isAuthenticated, loading } = useAuth()
   const router = useRouter()
 
@@ -21,8 +20,8 @@ export default function Home() {
     if (!loading) {
       if (!isAuthenticated) {
         router.push("/login")
-      } else if (user?.role === "coach") {
-        router.push("/dashboard/coach")
+      } else if (user?.role !== "coach") {
+        router.push("/dashboard")
       }
     }
   }, [isAuthenticated, loading, user, router])
@@ -35,17 +34,12 @@ export default function Home() {
     )
   }
 
-  if (!isAuthenticated) {
-    return null
-  }
-
-  // Only show super admin dashboard
-  if (user?.role !== "super_admin") {
+  if (!isAuthenticated || user?.role !== "coach") {
     return null
   }
 
   return (
-    <DashboardProvider>
+    <CoachProvider>
       <div className="h-screen">
         <SidebarProvider
           className="flex h-full"
@@ -57,13 +51,13 @@ export default function Home() {
           }
         >
           <div className="flex h-full w-full">
-            <AppSidebar variant="inset" />
+            <CoachAppSidebar variant="inset" />
             <SidebarInset className="flex-1 h-full flex flex-col overflow-hidden">
               <SiteHeader />
               <div className="flex-1 overflow-auto">
                 <div className="@container/main">
                   <div className="px-4 lg:px-6 py-4">
-                    <DashboardTabs />
+                    <CoachTabs />
                   </div>
                 </div>
               </div>
@@ -71,6 +65,6 @@ export default function Home() {
           </div>
         </SidebarProvider>
       </div>
-    </DashboardProvider>
-  );
-}
+    </CoachProvider>
+  )
+} 

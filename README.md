@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YSN - Youth Sports Network Dashboard
+
+A comprehensive role-based dashboard system for managing youth sports networks with different interfaces for Super Admins and Coaches.
+
+## Features
+
+### Role-Based Access
+- **Super Admin Dashboard**: Full system management with overview of all data
+- **Coach Dashboard**: Specialized interface for coaches to manage their players and activities
+
+### Coach Dashboard Features
+1. **Players Management**
+   - Table view of followed players
+   - Editable player ratings
+   - Player information: Full name, DOB, Grade, ACT, SAT, GPA, Position, State
+   - Add notes and labels to players
+   - Multiple notes per player
+
+2. **Calendar Management**
+   - Calendar view of events
+   - Add new events (practice, game, meeting, other)
+   - Event details: title, date, time, location, description
+   - Event type categorization
+
+3. **Profile Management**
+   - Personal information editing
+   - Photo upload capability
+   - Contact information: name, mobile, email
+   - Education details: university/college
+   - Bio and experience information
+
+4. **Player Search**
+   - Advanced search with filters
+   - Filter by: grade, position, graduation year, state
+   - Search results with player ratings
+   - Follow/unfollow players
+
+### Authentication
+- Dummy login system with role-based routing
+- Demo accounts for testing:
+  - **Super Admin**: admin@ysn.com / password
+  - **Coach**: coach@ysn.com / password
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+4. Use the demo accounts to test different roles:
+   - Login as coach to see the coach dashboard
+   - Login as admin to see the super admin dashboard
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── login/           # Login page
+│   ├── dashboard/       # Dashboard routing
+│   │   └── coach/      # Coach-specific dashboard
+│   └── page.tsx        # Main page (super admin)
+├── components/
+│   ├── coach-*.tsx     # Coach dashboard components
+│   ├── ui/             # Reusable UI components
+│   └── ...             # Other components
+├── contexts/
+│   ├── auth-context.tsx    # Authentication context
+│   ├── coach-context.tsx   # Coach-specific context
+│   └── dashboard-context.tsx # Super admin context
+└── ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technology Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Next.js 15** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Radix UI** - Accessible components
+- **Lucide React** - Icons
+- **Recharts** - Charts and data visualization
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Development Notes
 
-## Learn More
+- The system uses dummy data for demonstration
+- Authentication is client-side only (for demo purposes)
+- Backend integration points are commented for future implementation
+- All components are fully responsive and accessible
 
-To learn more about Next.js, take a look at the following resources:
+## Future Enhancements
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Backend API integration
+- Real authentication system
+- Database integration
+- Real-time updates
+- Advanced calendar integration
+- File upload functionality
+- Advanced search and filtering
