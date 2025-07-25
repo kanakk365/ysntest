@@ -26,7 +26,11 @@ import {
   GraduationCap,
   BookOpen,
   Calculator,
-  Award
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react"
 
 interface Player {
@@ -51,6 +55,10 @@ export function CoachesTab() {
   const [newLabel, setNewLabel] = useState("")
   const [showNoteDialog, setShowNoteDialog] = useState(false)
   const [showLabelDialog, setShowLabelDialog] = useState(false)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
 
   const handleRatingChange = (playerId: string, newRating: number) => {
     updatePlayerRating(playerId, newRating)
@@ -76,8 +84,23 @@ export function CoachesTab() {
     return new Date(dateString).toLocaleDateString()
   }
 
+  // Pagination calculations
+  const totalPages = Math.ceil(players.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentPlayers = players.slice(startIndex, endIndex)
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+  }
+
+  const goToFirstPage = () => goToPage(1)
+  const goToLastPage = () => goToPage(totalPages)
+  const goToPreviousPage = () => goToPage(currentPage - 1)
+  const goToNextPage = () => goToPage(currentPage + 1)
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Players</h1>
@@ -111,7 +134,7 @@ export function CoachesTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {players.map((player) => (
+                {currentPlayers.map((player) => (
                   <TableRow key={player.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -227,6 +250,75 @@ export function CoachesTab() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-6">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1} to {Math.min(endIndex, players.length)} of {players.length} players
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => goToPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  )
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

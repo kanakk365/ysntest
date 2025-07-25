@@ -52,14 +52,10 @@ export default function CoachDashboard() {
         >
           <div className="flex h-full w-full">
             <CoachAppSidebar variant="inset" />
-            <SidebarInset className="flex-1 h-full flex flex-col overflow-hidden">
+            <SidebarInset className="flex-1 h-full flex flex-col">
               <SiteHeader />
-              <div className="flex-1 overflow-auto">
-                <div className="@container/main">
-                  <div className="px-4 lg:px-6 py-4">
-                    <CoachTabs />
-                  </div>
-                </div>
+              <div className="flex-1 p-4 lg:p-6">
+                <CoachTabs />
               </div>
             </SidebarInset>
           </div>

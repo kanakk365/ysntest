@@ -89,19 +89,7 @@ export function CoachAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="px-2 py-3">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:!p-2 cursor-pointer"
-              onClick={logout}
-            >
-              <IconLogout className="!size-4" />
-              <span>Log out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      
     </Sidebar>
   )
 } 
