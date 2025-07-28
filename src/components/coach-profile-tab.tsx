@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Camera, Save, User, Mail, Phone, GraduationCap, MapPin } from "lucide-react"
 
 export function CoachProfileTab() {
-  const { user } = useAuth()
+  const { user } = useAuthStore()
   const [profile, setProfile] = useState({
     name: user?.name || "Coach John",
     email: user?.email || "coach@ysn.com",

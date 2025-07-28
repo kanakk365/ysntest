@@ -6,6 +6,8 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
+import { useAuthStore } from "@/lib/auth-store"
+import { useRouter } from "next/navigation"
 
 import {
   Avatar,
@@ -32,6 +34,14 @@ export function NavUser({
     avatar: string
   }
 }) {
+  const { logout } = useAuthStore()
+  const router = useRouter()
+  
+  const handleLogout = async () => {
+    await logout()
+    router.push("/login")
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -67,7 +77,7 @@ export function NavUser({
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <IconLogout className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

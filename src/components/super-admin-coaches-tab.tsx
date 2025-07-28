@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -28,74 +28,76 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
-
-interface Coach {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobile: string;
-  highSchoolAddress: string;
-  logo: string;
-  status: "active" | "inactive";
-}
+import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { api, Coach, CoachType, CoachFormData } from "@/lib/api";
+import { toast } from "sonner";
 
 export function SuperAdminCoachesTab() {
-  const [coaches, setCoaches] = useState<Coach[]>([
-    {
-      id: 1,
-      firstName: "John",
-      lastName: "Smith",
-      email: "john.smith@school.com",
-      mobile: "+1 (555) 123-4567",
-      highSchoolAddress: "123 Main St, Springfield, IL 62701",
-      logo: "/coaches/coach1.png",
-      status: "active",
-    },
-    {
-      id: 2,
-      firstName: "Sarah",
-      lastName: "Johnson",
-      email: "sarah.johnson@school.com",
-      mobile: "+1 (555) 234-5678",
-      highSchoolAddress: "456 Oak Ave, Springfield, IL 62702",
-      logo: "/coaches/coach2.png",
-      status: "active",
-    },
-    {
-      id: 3,
-      firstName: "Mike",
-      lastName: "Brown",
-      email: "mike.brown@school.com",
-      mobile: "+1 (555) 345-6789",
-      highSchoolAddress: "789 Pine Rd, Springfield, IL 62703",
-      logo: "/coaches/coach3.png",
-      status: "inactive",
-    },
-  ]);
-
+  const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [coachTypes, setCoachTypes] = useState<CoachType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
-  const [newCoach, setNewCoach] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    mobile: "",
-    highSchoolAddress: "",
-    logo: "",
+  const [submitting, setSubmitting] = useState(false);
+  const [newCoach, setNewCoach] = useState<CoachFormData>({
+    org_id: "1",
+    coach_fname: "",
+    coach_lname: "",
+    coach_email: "",
+    coach_phone: "",
+    coach_type: "",
+    coach_team_id: "",
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const itemsPerPage = 5;
+
+  // Fetch coaches and coach types on component mount
+  useEffect(() => {
+    fetchCoaches();
+    fetchCoachTypes();
+  }, []);
+
+  const fetchCoaches = async () => {
+    try {
+      setLoading(true);
+      const response = await api.coaches.getList();
+      if (response.status) {
+        setCoaches(response.data);
+      } else {
+        toast.error(response.message || "Failed to fetch coaches");
+      }
+    } catch (error) {
+      console.error("Error fetching coaches:", error);
+      toast.error("Failed to fetch coaches");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCoachTypes = async () => {
+    try {
+      const response = await api.coaches.getTypes();
+      if (response.status) {
+        setCoachTypes(response.data);
+      } else {
+        toast.error(response.message || "Failed to fetch coach types");
+      }
+    } catch (error) {
+      console.error("Error fetching coach types:", error);
+      toast.error("Failed to fetch coach types");
+    }
+  };
+
   const filteredCoaches = coaches.filter(
     (coach) =>
-      `${coach.firstName} ${coach.lastName}`
+      `${coach.coach_fname} ${coach.coach_lname}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
-      coach.email.toLowerCase().includes(searchTerm.toLowerCase())
+      coach.coach_email.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const totalPages = Math.ceil(filteredCoaches.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -104,62 +106,151 @@ export function SuperAdminCoachesTab() {
     startIndex + itemsPerPage
   );
 
-  const handleAddCoach = () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const createFormData = (coachData: CoachFormData, isEdit = false): FormData => {
+    const formData = new FormData();
+    
+    if (isEdit && coachData.coach_id) {
+      formData.append("coach_id", coachData.coach_id);
+    }
+    
+    formData.append("org_id", coachData.org_id);
+    formData.append("coach_fname", coachData.coach_fname);
+    formData.append("coach_lname", coachData.coach_lname);
+    formData.append("coach_email", coachData.coach_email);
+    formData.append("coach_phone", coachData.coach_phone);
+    formData.append("coach_type", coachData.coach_type);
+    
+    if (coachData.coach_team_id) {
+      formData.append("coach_team_id", coachData.coach_team_id);
+    }
+    
+    if (selectedFile) {
+      formData.append("logo", selectedFile);
+    }
+    
+    return formData;
+  };
+
+  const handleAddCoach = async () => {
     if (
-      newCoach.firstName.trim() &&
-      newCoach.lastName.trim() &&
-      newCoach.email.trim()
+      newCoach.coach_fname.trim() &&
+      newCoach.coach_lname.trim() &&
+      newCoach.coach_email.trim() &&
+      newCoach.coach_type
     ) {
-      const newId = Math.max(...coaches.map((c) => c.id)) + 1;
-      setCoaches([
-        ...coaches,
-        {
-          id: newId,
-          ...newCoach,
-          logo: newCoach.logo || "/coaches/default.png",
-          status: "active",
-        },
-      ]);
-      setNewCoach({
-        firstName: "",
-        lastName: "",
-        email: "",
-        mobile: "",
-        highSchoolAddress: "",
-        logo: "",
-      });
-      setIsAddModalOpen(false);
+      try {
+        setSubmitting(true);
+        const formData = createFormData(newCoach);
+        const response = await api.coaches.storeUpdate(formData);
+        
+        if (response.status) {
+          toast.success("Coach added successfully");
+          setNewCoach({
+            org_id: "1",
+            coach_fname: "",
+            coach_lname: "",
+            coach_email: "",
+            coach_phone: "",
+            coach_type: "",
+            coach_team_id: "",
+          });
+          setSelectedFile(null);
+          setIsAddModalOpen(false);
+          fetchCoaches(); // Refresh the list
+        } else {
+          toast.error(response.message || "Failed to add coach");
+        }
+      } catch (error) {
+        console.error("Error adding coach:", error);
+        toast.error("Failed to add coach");
+      } finally {
+        setSubmitting(false);
+      }
+    } else {
+      toast.error("Please fill in all required fields");
     }
   };
 
-  const handleEditCoach = () => {
+  const handleEditCoach = async () => {
     if (editingCoach) {
-      setCoaches(
-        coaches.map((coach) =>
-          coach.id === editingCoach.id ? editingCoach : coach
-        )
-      );
-      setIsEditModalOpen(false);
-      setEditingCoach(null);
+      try {
+        setSubmitting(true);
+        const formData = createFormData({
+          coach_id: editingCoach.coach_hash_id,
+          org_id: "1",
+          coach_fname: editingCoach.coach_fname,
+          coach_lname: editingCoach.coach_lname,
+          coach_email: editingCoach.coach_email,
+          coach_phone: editingCoach.coach_phone,
+          coach_type: editingCoach.coach_type.toString(),
+          coach_team_id: "",
+        }, true);
+        
+        const response = await api.coaches.storeUpdate(formData);
+        
+        if (response.status) {
+          toast.success("Coach updated successfully");
+          setIsEditModalOpen(false);
+          setEditingCoach(null);
+          setSelectedFile(null);
+          fetchCoaches(); // Refresh the list
+        } else {
+          toast.error(response.message || "Failed to update coach");
+        }
+      } catch (error) {
+        console.error("Error updating coach:", error);
+        toast.error("Failed to update coach");
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
-  const handleDeleteCoach = (id: number) => {
-    setCoaches(coaches.filter((coach) => coach.id !== id));
+  const handleDeleteCoach = async (hashId: string) => {
+    if (confirm("Are you sure you want to delete this coach?")) {
+      try {
+        const response = await api.coaches.delete(hashId);
+        if (response.status) {
+          toast.success("Coach deleted successfully");
+          fetchCoaches(); // Refresh the list
+        } else {
+          toast.error(response.message || "Failed to delete coach");
+        }
+      } catch (error) {
+        console.error("Error deleting coach:", error);
+        toast.error("Failed to delete coach");
+      }
+    }
   };
 
-  const toggleStatus = (id: number) => {
-    setCoaches(
-      coaches.map((coach) =>
-        coach.id === id
-          ? {
-              ...coach,
-              status: coach.status === "active" ? "inactive" : "active",
-            }
-          : coach
-      )
-    );
+  const getCoachTypeName = (typeId: number) => {
+    const coachType = coachTypes.find(type => type.id === typeId);
+    return coachType?.name || `Type ${typeId}`;
   };
+
+  const getStatusText = (status: number) => {
+    return status === 1 ? "active" : "inactive";
+  };
+
+  const getStatusBadgeVariant = (status: number) => {
+    return status === 1 ? "default" : "outline";
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading coaches...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 h-full">
@@ -193,96 +284,112 @@ export function SuperAdminCoachesTab() {
                   <DialogHeader>
                     <DialogTitle>Add New Coach</DialogTitle>
                   </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          value={newCoach.coach_fname}
+                          onChange={(e) =>
+                            setNewCoach({
+                              ...newCoach,
+                              coach_fname: e.target.value,
+                            })
+                          }
+                          placeholder="First name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          value={newCoach.coach_lname}
+                          onChange={(e) =>
+                            setNewCoach({ ...newCoach, coach_lname: e.target.value })
+                          }
+                          placeholder="Last name"
+                        />
+                      </div>
+                    </div>
                     <div>
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="email">Email</Label>
                       <Input
-                        id="firstName"
-                        value={newCoach.firstName}
+                        id="email"
+                        type="email"
+                        value={newCoach.coach_email}
                         onChange={(e) =>
-                          setNewCoach({
-                            ...newCoach,
-                            firstName: e.target.value,
-                          })
+                          setNewCoach({ ...newCoach, coach_email: e.target.value })
                         }
-                        placeholder="First name"
+                        placeholder="Email address"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="mobile">Mobile</Label>
                       <Input
-                        id="lastName"
-                        value={newCoach.lastName}
+                        id="mobile"
+                        type="tel"
+                        value={newCoach.coach_phone}
                         onChange={(e) =>
-                          setNewCoach({ ...newCoach, lastName: e.target.value })
+                          setNewCoach({ ...newCoach, coach_phone: e.target.value })
                         }
-                        placeholder="Last name"
+                        placeholder="Mobile number"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="coachType">Coach Type</Label>
+                      <select
+                        id="coachType"
+                        value={newCoach.coach_type}
+                        onChange={(e) =>
+                          setNewCoach({ ...newCoach, coach_type: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                      >
+                        <option value="">Select coach type</option>
+                        {coachTypes.map((type) => (
+                          <option key={type.id} value={type.id}>
+                            {type.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="logo">Logo</Label>
+                      <Input
+                        id="logo"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        className="cursor-pointer"
+                        variant="outline"
+                        onClick={() => setIsAddModalOpen(false)}
+                        disabled={submitting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        className="cursor-pointer" 
+                        onClick={handleAddCoach}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Adding...
+                          </>
+                        ) : (
+                          "Add Coach"
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={newCoach.email}
-                      onChange={(e) =>
-                        setNewCoach({ ...newCoach, email: e.target.value })
-                      }
-                      placeholder="Email address"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="mobile">Mobile</Label>
-                    <Input
-                      id="mobile"
-                      type="tel"
-                      value={newCoach.mobile}
-                      onChange={(e) =>
-                        setNewCoach({ ...newCoach, mobile: e.target.value })
-                      }
-                      placeholder="Mobile number"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">High School Address</Label>
-                    <Input
-                      id="address"
-                      value={newCoach.highSchoolAddress}
-                      onChange={(e) =>
-                        setNewCoach({
-                          ...newCoach,
-                          highSchoolAddress: e.target.value,
-                        })
-                      }
-                      placeholder="High school address"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="logo">Logo URL</Label>
-                    <Input
-                      id="logo"
-                      value={newCoach.logo}
-                      onChange={(e) =>
-                        setNewCoach({ ...newCoach, logo: e.target.value })
-                      }
-                      placeholder="Logo URL"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      className="cursor-pointer"
-                      variant="outline"
-                      onClick={() => setIsAddModalOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button className="cursor-pointer" onClick={handleAddCoach}>Add Coach</Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -295,51 +402,50 @@ export function SuperAdminCoachesTab() {
                   <TableHead>Coach</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedCoaches.map((coach, index) => (
-                  <TableRow key={coach.id}>
+                  <TableRow key={coach.coach_id}>
                     <TableCell>{startIndex + index + 1}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           <AvatarImage
-                            src={coach.logo}
-                            alt={`${coach.firstName} ${coach.lastName}`}
+                            src={coach.coach_profile_photo}
+                            alt={`${coach.coach_fname} ${coach.coach_lname}`}
                           />
                           <AvatarFallback>
-                            {coach.firstName.charAt(0)}
-                            {coach.lastName.charAt(0)}
+                            {coach.coach_fname.charAt(0)}
+                            {coach.coach_lname.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">
-                            {coach.firstName} {coach.lastName}
+                            {coach.coach_fname} {coach.coach_lname}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {coach.highSchoolAddress}
+                            ID: {coach.coach_id}
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{coach.mobile}</TableCell>
-                    <TableCell>{coach.email}</TableCell>
+                    <TableCell>{coach.coach_phone}</TableCell>
+                    <TableCell>{coach.coach_email}</TableCell>
+                    <TableCell>{getCoachTypeName(coach.coach_type)}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={
-                          coach.status === "active" ? "default" : "outline"
-                        }
+                        variant={getStatusBadgeVariant(coach.coach_status)}
                         className={`cursor-pointer text-center w-16 justify-center ${
-                          coach.status === "inactive" 
+                          coach.coach_status === 0 
                             ? "bg-gray-600 text-gray-300 border-gray-300 hover:bg-gray-500" 
                             : ""
                         }`}
-                        onClick={() => toggleStatus(coach.id)}
                       >
-                        {coach.status}
+                        {getStatusText(coach.coach_status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -358,7 +464,7 @@ export function SuperAdminCoachesTab() {
                         <Button
                           className="cursor-pointer bg-transparent hover:bg-transparent"
                           size="sm"
-                          onClick={() => handleDeleteCoach(coach.id)}
+                          onClick={() => handleDeleteCoach(coach.coach_hash_id)}
                         >
                           <Trash2 className="h-4 w-4 text-red-700" />
                         </Button>
@@ -412,11 +518,11 @@ export function SuperAdminCoachesTab() {
                   <Label htmlFor="editFirstName">First Name</Label>
                   <Input
                     id="editFirstName"
-                    value={editingCoach.firstName}
+                    value={editingCoach.coach_fname}
                     onChange={(e) =>
                       setEditingCoach({
                         ...editingCoach,
-                        firstName: e.target.value,
+                        coach_fname: e.target.value,
                       })
                     }
                   />
@@ -425,11 +531,11 @@ export function SuperAdminCoachesTab() {
                   <Label htmlFor="editLastName">Last Name</Label>
                   <Input
                     id="editLastName"
-                    value={editingCoach.lastName}
+                    value={editingCoach.coach_lname}
                     onChange={(e) =>
                       setEditingCoach({
                         ...editingCoach,
-                        lastName: e.target.value,
+                        coach_lname: e.target.value,
                       })
                     }
                   />
@@ -440,9 +546,9 @@ export function SuperAdminCoachesTab() {
                 <Input
                   id="editEmail"
                   type="email"
-                  value={editingCoach.email}
+                  value={editingCoach.coach_email}
                   onChange={(e) =>
-                    setEditingCoach({ ...editingCoach, email: e.target.value })
+                    setEditingCoach({ ...editingCoach, coach_email: e.target.value })
                   }
                 />
               </div>
@@ -451,33 +557,39 @@ export function SuperAdminCoachesTab() {
                 <Input
                   id="editMobile"
                   type="tel"
-                  value={editingCoach.mobile}
+                  value={editingCoach.coach_phone}
                   onChange={(e) =>
-                    setEditingCoach({ ...editingCoach, mobile: e.target.value })
+                    setEditingCoach({ ...editingCoach, coach_phone: e.target.value })
                   }
                 />
               </div>
               <div>
-                <Label htmlFor="editAddress">High School Address</Label>
-                <Input
-                  id="editAddress"
-                  value={editingCoach.highSchoolAddress}
+                <Label htmlFor="editCoachType">Coach Type</Label>
+                <select
+                  id="editCoachType"
+                  value={editingCoach.coach_type}
                   onChange={(e) =>
                     setEditingCoach({
                       ...editingCoach,
-                      highSchoolAddress: e.target.value,
+                      coach_type: parseInt(e.target.value),
                     })
                   }
-                />
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                >
+                  {coachTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
-                <Label htmlFor="editLogo">Logo URL</Label>
+                <Label htmlFor="editLogo">Logo</Label>
                 <Input
                   id="editLogo"
-                  value={editingCoach.logo}
-                  onChange={(e) =>
-                    setEditingCoach({ ...editingCoach, logo: e.target.value })
-                  }
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
                 />
               </div>
               <div className="flex justify-end gap-2">
@@ -485,10 +597,24 @@ export function SuperAdminCoachesTab() {
                   className="cursor-pointer"
                   variant="outline"
                   onClick={() => setIsEditModalOpen(false)}
+                  disabled={submitting}
                 >
                   Cancel
                 </Button>
-                <Button className="cursor-pointer" onClick={handleEditCoach}>Save Changes</Button>
+                <Button 
+                  className="cursor-pointer" 
+                  onClick={handleEditCoach}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               </div>
             </div>
           )}

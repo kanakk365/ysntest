@@ -4,7 +4,7 @@ import { CoachAppSidebar } from "@/components/coach-app-sidebar"
 import { CoachTabs } from "@/components/coach-tabs"
 import { SiteHeader } from "@/components/site-header"
 import { CoachProvider } from "@/contexts/coach-context"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import {
@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function CoachDashboard() {
-  const { user, isAuthenticated, loading } = useAuth()
+  const { user, isAuthenticated, loading } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         router.push("/login")
-      } else if (user?.role !== "coach") {
+      } else if (user?.user_type !== 3) {
         router.push("/dashboard")
       }
     }
@@ -34,8 +34,12 @@ export default function CoachDashboard() {
     )
   }
 
-  if (!isAuthenticated || user?.role !== "coach") {
-    return null
+  if (!isAuthenticated || user?.user_type !== 3) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Access denied. Redirecting...</div>
+      </div>
+    )
   }
 
   return (

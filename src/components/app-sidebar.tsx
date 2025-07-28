@@ -10,18 +10,18 @@ import {
   IconLogout,
   IconInnerShadowTop,
 } from "@tabler/icons-react"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/auth-store"
+import { useRouter } from "next/navigation"
 
 import { NavMain } from "@/components/nav-main"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar-zustand"
 
 const data = {
   navMain: [
@@ -55,8 +55,14 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { logout } = useAuth()
+  const { logout } = useAuthStore()
+  const router = useRouter()
   
+  const handleLogout = async () => {
+    await logout()
+    router.push("/login")
+  }
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarContent className="px-4 py-2">
@@ -67,7 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               className="data-[slot=sidebar-menu-button]:!p-2 cursor-pointer"
-              onClick={logout}
+              onClick={handleLogout}
             >
               <IconLogout className="!size-4" />
               <span>Log out</span>

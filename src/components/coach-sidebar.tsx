@@ -1,7 +1,8 @@
 "use client"
 
 import { useCoach, type CoachTab } from "@/contexts/coach-context"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/auth-store"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
@@ -18,7 +19,8 @@ import { cn } from "@/lib/utils"
 
 export function CoachSidebar() {
   const { activeTab, setActiveTab } = useCoach()
-  const { logout } = useAuth()
+  const { logout } = useAuthStore()
+  const router = useRouter()
 
   const navigation = [
     {
@@ -46,6 +48,11 @@ export function CoachSidebar() {
       description: "Find new players"
     }
   ]
+
+  const handleLogout = async () => {
+    await logout()
+    router.push("/login")
+  }
 
   return (
     <div className="flex h-full w-full flex-col bg-gray-900/95">
@@ -95,7 +102,7 @@ export function CoachSidebar() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 text-gray-300 hover:text-white hover:bg-gray-800"
-            onClick={logout}
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
             <span className="text-lg">Sign Out</span>

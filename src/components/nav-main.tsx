@@ -1,7 +1,7 @@
 "use client"
 
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
-import { useDashboard } from "@/contexts/dashboard-context"
+import { useDashboardStore } from "@/lib/dashboard-store"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -10,7 +10,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar-zustand"
 
 export function NavMain({
   items,
@@ -22,7 +22,7 @@ export function NavMain({
     isActive?: boolean
   }[]
 }) {
-  const { activeTab, setActiveTab } = useDashboard()
+  const { activeTab, setActiveTab } = useDashboardStore()
 
   const handleItemClick = (item: { title: string; url: string }) => {
     // Handle logout separately

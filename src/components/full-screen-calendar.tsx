@@ -73,7 +73,7 @@ export function FullScreenCalendar({ data, onAddEvent }: FullScreenCalendarProps
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 w-full h-full flex-col max-w-7xl mx-auto">
       {/* Calendar Header */}
       <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none">
         <div className="flex flex-auto">

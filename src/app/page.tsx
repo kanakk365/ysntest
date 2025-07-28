@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
@@ -14,14 +14,14 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function Home() {
-  const { user, isAuthenticated, loading } = useAuth()
+  const { user, isAuthenticated, loading } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         router.push("/login")
-      } else if (user?.role === "coach") {
+      } else if (user?.user_type === 3) {
         router.push("/dashboard/coach")
       }
     }
@@ -36,12 +36,20 @@ export default function Home() {
   }
 
   if (!isAuthenticated) {
-    return null
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Redirecting to login...</div>
+      </div>
+    )
   }
 
   // Only show super admin dashboard
-  if (user?.role !== "super_admin") {
-    return null
+  if (user?.user_type !== 1) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Access denied. Redirecting...</div>
+      </div>
+    )
   }
 
   return (

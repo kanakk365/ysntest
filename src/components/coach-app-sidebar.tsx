@@ -9,7 +9,8 @@ import {
   IconLogout,
 } from "@tabler/icons-react"
 import { useCoach } from "@/contexts/coach-context"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/auth-store"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -55,10 +56,16 @@ const coachNavData = {
 
 export function CoachAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { activeTab, setActiveTab } = useCoach()
-  const { logout } = useAuth()
+  const { logout } = useAuthStore()
+  const router = useRouter()
 
   const handleItemClick = (tab: "players" | "calendar" | "profile" | "search") => {
     setActiveTab(tab)
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    router.push("/login")
   }
 
   return (
@@ -89,7 +96,19 @@ export function CoachAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      
+      <SidebarFooter className="px-2 py-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="data-[slot=sidebar-menu-button]:!p-2 cursor-pointer"
+              onClick={handleLogout}
+            >
+              <IconLogout className="!size-4" />
+              <span>Log out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 } 

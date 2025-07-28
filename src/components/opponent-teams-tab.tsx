@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Table,
   TableBody,
@@ -25,37 +25,59 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
-
-interface Team {
-  id: number;
-  name: string;
-  logo: string;
-  status: "active" | "inactive";
-}
+import { Plus, Search, Edit, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { api, OpponentTeam } from "@/lib/api";
+import { toast } from "sonner";
 
 export function OpponentTeamsTab() {
-  const [teams, setTeams] = useState<Team[]>([
-    { id: 1, name: "Warriors", logo: "/teams/warriors.png", status: "active" },
-    { id: 2, name: "Lakers", logo: "/teams/lakers.png", status: "active" },
-    { id: 3, name: "Bulls", logo: "/teams/bulls.png", status: "inactive" },
-    { id: 4, name: "Celtics", logo: "/teams/celtics.png", status: "active" },
-    { id: 5, name: "Heat", logo: "/teams/heat.png", status: "active" },
-  ]);
-
+  const [teams, setTeams] = useState<OpponentTeam[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [newTeam, setNewTeam] = useState({ name: "", logo: "" });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<OpponentTeam | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState<OpponentTeam | null>(null);
+  const [newTeam, setNewTeam] = useState({ 
+    oppt_team_name: "", 
+    logo: null as File | null 
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const itemsPerPage = 5;
+
+  // Fetch teams on component mount
+  useEffect(() => {
+    fetchTeams();
+  }, []);
+
+  const fetchTeams = async () => {
+    try {
+      setLoading(true);
+      const response = await api.opponentTeams.getList();
+      
+      if (response.status) {
+        setTeams(response.data);
+      } else {
+        toast.error(response.message || "Failed to fetch teams");
+      }
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      toast.error("Failed to fetch teams");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredTeams = teams.filter((team) =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase())
+    team.oppt_team_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const totalPages = Math.ceil(filteredTeams.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -64,49 +86,117 @@ export function OpponentTeamsTab() {
     startIndex + itemsPerPage
   );
 
-  const handleAddTeam = () => {
-    if (newTeam.name.trim()) {
-      const newId = Math.max(...teams.map((t) => t.id)) + 1;
-      setTeams([
-        ...teams,
-        {
-          id: newId,
-          name: newTeam.name,
-          logo: newTeam.logo || "/teams/default.png",
-          status: "active",
-        },
-      ]);
-      setNewTeam({ name: "", logo: "" });
-      setIsAddModalOpen(false);
+  const handleAddTeam = async () => {
+    if (!newTeam.oppt_team_name.trim()) {
+      toast.error("Please enter a team name");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      formData.append("oppt_team_name", newTeam.oppt_team_name);
+      if (newTeam.logo) {
+        formData.append("logo", newTeam.logo);
+      }
+
+      const response = await api.opponentTeams.storeUpdate(formData);
+      
+      if (response.status) {
+        toast.success("Team added successfully");
+        setNewTeam({ oppt_team_name: "", logo: null });
+        setIsAddModalOpen(false);
+        fetchTeams(); // Refresh the list
+      } else {
+        toast.error(response.message || "Failed to add team");
+      }
+    } catch (error) {
+      console.error("Error adding team:", error);
+      toast.error("Failed to add team");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleEditTeam = () => {
-    if (editingTeam) {
-      setTeams(
-        teams.map((team) => (team.id === editingTeam.id ? editingTeam : team))
-      );
-      setIsEditModalOpen(false);
-      setEditingTeam(null);
+  const handleEditTeam = async () => {
+    if (!editingTeam || !editingTeam.oppt_team_name.trim()) {
+      toast.error("Please enter a team name");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      formData.append("oppt_team_name", editingTeam.oppt_team_name);
+      if (editingTeam.oppt_team_logo) {
+        // If there's a new logo file, add it
+        // For now, we'll just update the name
+      }
+
+      const response = await api.opponentTeams.storeUpdate(formData);
+      
+      if (response.status) {
+        toast.success("Team updated successfully");
+        setIsEditModalOpen(false);
+        setEditingTeam(null);
+        fetchTeams(); // Refresh the list
+      } else {
+        toast.error(response.message || "Failed to update team");
+      }
+    } catch (error) {
+      console.error("Error updating team:", error);
+      toast.error("Failed to update team");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleDeleteTeam = (id: number) => {
-    setTeams(teams.filter((team) => team.id !== id));
+  const handleDeleteTeam = async () => {
+    if (!deletingTeam) return;
+
+    try {
+      setDeleting(true);
+      const response = await api.opponentTeams.delete(deletingTeam.hash_id);
+      
+      if (response.status) {
+        toast.success("Team deleted successfully");
+        setIsDeleteModalOpen(false);
+        setDeletingTeam(null);
+        fetchTeams(); // Refresh the list
+      } else {
+        toast.error(response.message || "Failed to delete team");
+      }
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      toast.error("Failed to delete team");
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  const toggleStatus = (id: number) => {
-    setTeams(
-      teams.map((team) =>
-        team.id === id
-          ? {
-              ...team,
-              status: team.status === "active" ? "inactive" : "active",
-            }
-          : team
-      )
+  const openDeleteModal = (team: OpponentTeam) => {
+    setDeletingTeam(team);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (isEdit && editingTeam) {
+        setEditingTeam({ ...editingTeam, oppt_team_logo: file.name });
+      } else {
+        setNewTeam({ ...newTeam, logo: file });
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6 h-full">
@@ -136,46 +226,58 @@ export function OpponentTeamsTab() {
                     Add Team
                   </Button>
                 </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Team</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="teamName">Team Name</Label>
-                    <Input
-                      id="teamName"
-                      value={newTeam.name}
-                      onChange={(e) =>
-                        setNewTeam({ ...newTeam, name: e.target.value })
-                      }
-                      placeholder="Enter team name"
-                    />
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Team</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="teamName">Team Name</Label>
+                      <Input
+                        id="teamName"
+                        value={newTeam.oppt_team_name}
+                        onChange={(e) =>
+                          setNewTeam({ ...newTeam, oppt_team_name: e.target.value })
+                        }
+                        placeholder="Enter team name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="teamLogo">Team Logo</Label>
+                      <Input
+                        id="teamLogo"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e)}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        className="cursor-pointer"
+                        variant="outline"
+                        onClick={() => setIsAddModalOpen(false)}
+                        disabled={submitting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        className="cursor-pointer" 
+                        onClick={handleAddTeam}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Adding...
+                          </>
+                        ) : (
+                          "Add Team"
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="teamLogo">Logo URL</Label>
-                    <Input
-                      id="teamLogo"
-                      value={newTeam.logo}
-                      onChange={(e) =>
-                        setNewTeam({ ...newTeam, logo: e.target.value })
-                      }
-                      placeholder="Enter logo URL"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      className="cursor-pointer"
-                      variant="outline"
-                      onClick={() => setIsAddModalOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button  className="cursor-pointer" onClick={handleAddTeam}>Add Team</Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -187,36 +289,20 @@ export function OpponentTeamsTab() {
                   <TableHead>S.No.</TableHead>
                   <TableHead>Logo</TableHead>
                   <TableHead>Team Name</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedTeams.map((team, index) => (
-                  <TableRow key={team.id}>
+                  <TableRow key={team.oppt_id}>
                     <TableCell>{startIndex + index + 1}</TableCell>
                     <TableCell>
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={team.logo} alt={team.name} />
-                        <AvatarFallback>{team.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={team.logo} alt={team.oppt_team_name} />
+                        <AvatarFallback>{team.oppt_team_name.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </TableCell>
-                    <TableCell className="font-medium">{team.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          team.status === "active" ? "default" : "outline"
-                        }
-                        className={`cursor-pointer text-center w-16 justify-center ${
-                          team.status === "inactive" 
-                            ? "bg-gray-600 text-gray-300 border-gray-300 hover:bg-gray-500" 
-                            : ""
-                        }`}
-                        onClick={() => toggleStatus(team.id)}
-                      >
-                        {team.status}
-                      </Badge>
-                    </TableCell>
+                    <TableCell className="font-medium">{team.oppt_team_name}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
@@ -231,11 +317,11 @@ export function OpponentTeamsTab() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          className="cursor-pointer bg-transparent hover:bg-transparent "
+                          className="cursor-pointer bg-transparent hover:bg-transparent"
                           size="sm"
-                          onClick={() => handleDeleteTeam(team.id)}
+                          onClick={() => openDeleteModal(team)}
                         >
-                          <Trash2 className="h-4 w-4 text-red-700 " />
+                          <Trash2 className="h-4 w-4 text-red-700" />
                         </Button>
                       </div>
                     </TableCell>
@@ -286,20 +372,19 @@ export function OpponentTeamsTab() {
                 <Label htmlFor="editTeamName">Team Name</Label>
                 <Input
                   id="editTeamName"
-                  value={editingTeam.name}
+                  value={editingTeam.oppt_team_name}
                   onChange={(e) =>
-                    setEditingTeam({ ...editingTeam, name: e.target.value })
+                    setEditingTeam({ ...editingTeam, oppt_team_name: e.target.value })
                   }
                 />
               </div>
               <div>
-                <Label htmlFor="editTeamLogo">Logo URL</Label>
+                <Label htmlFor="editTeamLogo">Team Logo</Label>
                 <Input
                   id="editTeamLogo"
-                  value={editingTeam.logo}
-                  onChange={(e) =>
-                    setEditingTeam({ ...editingTeam, logo: e.target.value })
-                  }
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, true)}
                 />
               </div>
               <div className="flex justify-end gap-2">
@@ -307,13 +392,72 @@ export function OpponentTeamsTab() {
                   className="cursor-pointer"
                   variant="outline"
                   onClick={() => setIsEditModalOpen(false)}
+                  disabled={submitting}
                 >
                   Cancel
                 </Button>
-                <Button className="cursor-pointer" onClick={handleEditTeam}>Save Changes</Button>
+                <Button 
+                  className="cursor-pointer" 
+                  onClick={handleEditTeam}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Team
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{deletingTeam?.oppt_team_name}</strong>? 
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setDeletingTeam(null);
+              }}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteTeam}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Team
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

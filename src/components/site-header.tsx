@@ -1,19 +1,21 @@
 "use client"
 
 import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarTrigger } from "@/components/ui/sidebar-zustand"
 import { NavUser } from "@/components/nav-user"
 import { NotificationIcon, MessageIcon } from "@/components/header-notifications"
 import { useIsMobile } from "@/hooks/use-mobile"
-
-const userData = {
-  name: "John Doe",
-  email: "john@example.com",
-  avatar: "/avatars/user.jpg",
-}
+import { useAuthStore } from "@/lib/auth-store"
 
 export function SiteHeader() {
   const isMobile = useIsMobile()
+  const { user } = useAuthStore()
+  
+  const userData = {
+    name: user?.name || "User",
+    email: user?.email || "user@example.com",
+    avatar: "/avatars/user.jpg",
+  }
   
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">

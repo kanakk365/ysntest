@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
+import { useState, useEffect } from "react"
+import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,28 +14,33 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
   
-  const { login } = useAuth()
+  const { login, loading, error, clearError, isAuthenticated, user } = useAuthStore()
   const router = useRouter()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.user_type === 1) {
+        router.push("/dashboard")
+      } else if (user.user_type === 3) {
+        router.push("/dashboard/coach")
+      }
+    }
+  }, [isAuthenticated, user, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setLoading(true)
+    clearError()
 
-    try {
-      const success = await login(email, password)
-      if (success) {
+    const success = await login(email, password)
+    
+    if (success && user) {
+      if (user.user_type === 1) {
         router.push("/dashboard")
-      } else {
-        setError("Invalid email or password")
+      } else if (user.user_type === 3) {
+        router.push("/dashboard/coach")
       }
-    } catch (err) {
-      setError("An error occurred during login")
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -113,14 +118,6 @@ export default function LoginPage() {
                 {loading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
-
-            <div className="mt-6 p-4 bg-gray-800/50 rounded-lg">
-              <h4 className="text-sm font-medium text-white mb-2">Demo Accounts:</h4>
-              <div className="space-y-1 text-xs text-gray-400">
-                <p><strong>Super Admin:</strong> admin@ysn.com / password</p>
-                <p><strong>Coach:</strong> coach@ysn.com / password</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
