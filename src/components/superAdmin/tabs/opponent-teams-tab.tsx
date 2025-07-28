@@ -199,8 +199,8 @@ export function OpponentTeamsTab() {
   }
 
   return (
-    <div className="space-y-6 h-full">
-      <Card className="h-full flex flex-col">
+    <div className="space-y-6 h-full ">
+      <Card className="h-full flex flex-col rounded-none ">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -286,25 +286,25 @@ export function OpponentTeamsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>S.No.</TableHead>
-                  <TableHead>Logo</TableHead>
-                  <TableHead>Team Name</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="w-16 text-center">S.No.</TableHead>
+                  <TableHead className="w-20 text-center">Logo</TableHead>
+                  <TableHead className="flex-1">Team Name</TableHead>
+                  <TableHead className="w-32 text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedTeams.map((team, index) => (
                   <TableRow key={team.oppt_id}>
-                    <TableCell>{startIndex + index + 1}</TableCell>
-                    <TableCell>
-                      <Avatar className="h-8 w-8">
+                    <TableCell className="text-center font-medium">{startIndex + index + 1}</TableCell>
+                    <TableCell className="text-center">
+                      <Avatar className="h-10 w-10 mx-auto">
                         <AvatarImage src={team.logo} alt={team.oppt_team_name} />
-                        <AvatarFallback>{team.oppt_team_name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="text-sm font-medium">{team.oppt_team_name.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </TableCell>
-                    <TableCell className="font-medium">{team.oppt_team_name}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="font-medium text-left">{team.oppt_team_name}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex gap-2 justify-center">
                         <Button
                           className="cursor-pointer"
                           variant="outline"

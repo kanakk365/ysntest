@@ -151,17 +151,15 @@ function SidebarMenuButton({
   isActive = false,
   variant = "default",
   size = "default",
-  tooltip,
   className,
   ...props
 }: React.ComponentProps<"button"> & {
   asChild?: boolean
   isActive?: boolean
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot : "button"
 
-  const content = (
+  return (
     <Comp
       className={cn(
         sidebarMenuButtonVariants({ variant, size }),
@@ -171,21 +169,6 @@ function SidebarMenuButton({
       {...props}
     />
   )
-
-  if (tooltip) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="flex items-center gap-2">
-            {typeof tooltip === "string" ? tooltip : tooltip.children}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
-
-  return content
 }
 
 function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {

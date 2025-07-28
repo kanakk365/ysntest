@@ -3,11 +3,11 @@
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { AppSidebar } from "@/components/app-sidebar"
-import { DashboardTabs } from "@/components/dashboard-tabs"
+import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
+import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
 import { Sidebar } from "@/components/ui/sidebar-zustand"
 import { useSidebarMobileSync } from "@/lib/sidebar-store"
-import { SiteHeader } from "@/components/site-header"
+import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 
 export default function Dashboard() {
   const { user, isAuthenticated, loading } = useAuthStore()

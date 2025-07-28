@@ -26,8 +26,8 @@ export function ProfileTab() {
   }
 
   return (
-    <div className="space-y-6 h-full">
-      <Card className="h-full flex flex-col">
+    <div className="space-y-6 h-full bg-card  ">
+      <Card className=" h-full w-full flex flex-col pt-20 rounded-none max-w-6xl m-auto  border-none bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-4">
             <Avatar className="h-16 w-16">

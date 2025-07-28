@@ -1,8 +1,8 @@
 "use client"
 
-import { CoachAppSidebar } from "@/components/coach-app-sidebar"
-import { CoachTabs } from "@/components/coach-tabs"
-import { SiteHeader } from "@/components/site-header"
+import { CoachAppSidebar } from "@/components/coach/navigation/coach-app-sidebar"
+import { CoachTabs } from "@/components/coach/dashboard/coach-tabs"
+import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 import { CoachProvider } from "@/contexts/coach-context"
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"

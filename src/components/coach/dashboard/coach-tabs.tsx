@@ -1,10 +1,10 @@
 "use client"
 
 import { useCoach } from "@/contexts/coach-context"
-import { CoachesTab } from "./coach-players-tab"
-import { CoachCalendarTab } from "./coach-calendar-tab"
-import { CoachProfileTab } from "./coach-profile-tab"
-import { CoachSearchTab } from "./coach-search-tab"
+import { CoachesTab } from "../tabs/coach-players-tab"
+import { CoachCalendarTab } from "../tabs/coach-calendar-tab"
+import { CoachProfileTab } from "../tabs/coach-profile-tab"
+import { CoachSearchTab } from "../tabs/coach-search-tab"
 
 export function CoachTabs() {
   const { activeTab } = useCoach()

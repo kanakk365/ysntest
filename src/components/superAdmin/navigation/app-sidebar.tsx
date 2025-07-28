@@ -13,7 +13,7 @@ import {
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 
-import { NavMain } from "@/components/nav-main"
+import { NavMain } from "@/components/superAdmin/navigation/nav-main"
 import {
   Sidebar,
   SidebarContent,

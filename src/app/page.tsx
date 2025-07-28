@@ -4,9 +4,9 @@ import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { DashboardTabs } from "@/components/dashboard-tabs"
-import { SiteHeader } from "@/components/site-header"
+import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
+import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
+import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 import { DashboardProvider } from "@/contexts/dashboard-context"
 import {
   SidebarInset,

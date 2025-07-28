@@ -68,7 +68,6 @@ export function NavMain({
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton 
-                  tooltip={item.title}
                   onClick={() => handleItemClick(item)}
                   className={isActive ? "bg-accent text-accent-foreground cursor-pointer " : "cursor-pointer"}
                 >

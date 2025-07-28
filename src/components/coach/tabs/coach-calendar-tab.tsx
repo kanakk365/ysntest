@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { FullScreenCalendar } from "@/components/full-screen-calendar"
+import { FullScreenCalendar } from "@/components/coach/dashboard/full-screen-calendar"
 
 interface Event {
   id: number

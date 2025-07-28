@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect } from "react"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { SectionCards } from "@/components/section-cards"
+import { ChartAreaInteractive } from "@/components/superAdmin/charts/chart-area-interactive"
+import { SectionCards } from "@/components/superAdmin/dashboard/section-cards"
 import { ChartBarDefault } from "@/components/ui/bar-chart"
-import { ChartPieSimple } from "./ui/pie-chart"
+import { ChartPieSimple } from "../../ui/pie-chart"
 import { useDashboardStore } from "@/lib/dashboard-store"
 
 export function DashboardContent() {

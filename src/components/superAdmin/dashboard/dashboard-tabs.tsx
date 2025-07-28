@@ -2,11 +2,11 @@
 
 import React from "react";
 import { useDashboardStore } from "@/lib/dashboard-store";
-import { DashboardContent } from "@/components/dashboard-content";
-import { ProfileTab } from "@/components/profile-tab";
-import { OpponentTeamsTab } from "@/components/opponent-teams-tab";
-import { SuperAdminCoachesTab } from "@/components/super-admin-coaches-tab";
-import { SettingsTab } from "@/components/settings-tab";
+import { DashboardContent } from "@/components/superAdmin/dashboard/dashboard-content";
+import { ProfileTab } from "@/components/superAdmin/tabs/profile-tab";
+import { OpponentTeamsTab } from "@/components/superAdmin/tabs/opponent-teams-tab";
+import { SuperAdminCoachesTab } from "@/components/superAdmin/tabs/super-admin-coaches-tab";
+import { SettingsTab } from "@/components/superAdmin/tabs/settings-tab";
 
 export function DashboardTabs() {
   const { activeTab } = useDashboardStore();

@@ -254,7 +254,7 @@ export function SuperAdminCoachesTab() {
 
   return (
     <div className="space-y-6 h-full">
-      <Card className="h-full flex flex-col">
+      <Card className="h-full flex flex-col rounded-none">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>

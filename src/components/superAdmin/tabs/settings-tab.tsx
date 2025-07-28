@@ -91,8 +91,8 @@ export function SettingsTab() {
   }
 
   return (
-    <div className="space-y-6 h-full">
-      <Card className="h-full flex flex-col">
+    <div className="space-y-6 h-full bg-card">
+      <Card className="h-full flex flex-col rounded-none max-w-6xl m-auto border-none">
         <CardHeader>
           <CardTitle>Super Admin Settings</CardTitle>
           <CardDescription>
@@ -109,7 +109,7 @@ export function SettingsTab() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 flex-1 overflow-auto">
+        <CardContent className="space-y-6 flex-1">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Organization Settings</h3>
             
@@ -185,71 +185,71 @@ export function SettingsTab() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Security</h3>
             
-            <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground border-primary" 
-                  variant="default"
-                >
-                  Change Password
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Change Password</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <Input
-                      id="currentPassword"
-                      type="password"
-                      value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                      placeholder="Enter current password"
-                    />
+            <div className="flex justify-between items-center">
+              <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground border-primary" 
+                    variant="default"
+                  >
+                    Change Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Change Password</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="currentPassword">Current Password</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="newPassword">New Password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                        placeholder="Enter new password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                        placeholder="Confirm new password"
+                      />
+                    </div>
+                    <div className="flex  gap-2">
+                      <Button className="cursor-pointer" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button className="cursor-pointer" onClick={handleChangePassword}>
+                        Change Password
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="newPassword">New Password</Label>
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                      placeholder="Enter new password"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                      placeholder="Confirm new password"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button className="cursor-pointer" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button className="cursor-pointer" onClick={handleChangePassword}>
-                      Change Password
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <div className="flex justify-end">
-            <Button 
-              className="cursor-pointer" 
-              onClick={handleSaveSettings}
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save Settings"}
-            </Button>
+                </DialogContent>
+              </Dialog>
+              
+              <Button 
+                className="cursor-pointer" 
+                onClick={handleSaveSettings}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Settings"}
+              </Button>
+            </div>
           </div>
 
           {/* Additional Information */}
