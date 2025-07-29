@@ -74,6 +74,26 @@ export interface ApiResponse {
   message: string
 }
 
+export interface UserProfile {
+  id: number
+  name: string
+  email: string
+  user_type: number
+  user_fname: string
+  user_lname: string
+  user_dob: string | null
+  user_mobile: string | null
+  user_college_name: string | null
+  user_status: number
+  user_slug_name: string
+}
+
+export interface UserProfileResponse {
+  status: boolean
+  data: UserProfile
+  message: string
+}
+
 export const api = {
   async fetch(url: string, options: RequestInit = {}) {
     const { user } = useAuthStore.getState()
@@ -192,6 +212,14 @@ export const api = {
       const response = await api.post(`${BASE_URL}/coach/delete`, {
         deletedId: hashId
       })
+      return response.json()
+    },
+  },
+
+  // User Profile API
+  userProfile: {
+    async get(): Promise<UserProfileResponse> {
+      const response = await api.get(`${BASE_URL}/user`)
       return response.json()
     },
   },
