@@ -2,16 +2,18 @@
 
 import { useState } from "react"
 import { useAuthStore } from "@/lib/auth-store"
+import { useCoach } from "@/contexts/coach-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
-import { Camera, Save, User, Mail, Phone, GraduationCap, MapPin } from "lucide-react"
+import { Camera, Save, User, Mail, Phone, GraduationCap, MapPin, ArrowLeft } from "lucide-react"
 
 export function CoachProfileTab() {
   const { user } = useAuthStore()
+  const { setActiveTab } = useCoach()
   const [profile, setProfile] = useState({
     name: user?.name || "Coach John",
     email: user?.email || "coach@ysn.com",
@@ -32,12 +34,26 @@ export function CoachProfileTab() {
     setIsEditing(false)
   }
 
+  const handleBackToPlayers = () => {
+    setActiveTab("players")
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Profile</h1>
-          <p className="text-muted-foreground">Manage your personal information</p>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBackToPlayers}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Players
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Profile</h1>
+            <p className="text-muted-foreground">Manage your personal information</p>
+          </div>
         </div>
         <Button 
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}

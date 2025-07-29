@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useCoach } from "@/contexts/coach-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +20,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ArrowLeft,
 } from "lucide-react"
 import Image from "next/image"
 
@@ -43,6 +45,7 @@ const mockPlayers = Array.from({ length: 50 }, (_, i) => ({
 }))
 
 export function CoachSearchTab() {
+  const { setActiveTab } = useCoach()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedGrade, setSelectedGrade] = useState("all")
   const [selectedPosition, setSelectedPosition] = useState("all")
@@ -66,6 +69,10 @@ export function CoachSearchTab() {
     console.log(`Viewing player ${playerId}`)
   }
 
+  const handleBackToPlayers = () => {
+    setActiveTab("players")
+  }
+
   // Pagination logic
   const totalPages = Math.ceil(searchResults.length / resultsPerPage)
   const startIndex = (currentPage - 1) * resultsPerPage
@@ -84,6 +91,15 @@ export function CoachSearchTab() {
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackToPlayers}
+              className="mr-2"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Players
+            </Button>
             <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
               <Search className="h-6 w-6 text-primary" />
             </div>

@@ -3,8 +3,6 @@
 import * as React from "react"
 import {
   IconUsers,
-  IconCalendar,
-  IconUser,
   IconSearch,
   IconLogout,
 } from "@tabler/icons-react"
@@ -34,18 +32,6 @@ const coachNavData = {
       tab: "players" as const,
     },
     {
-      title: "Calendar",
-      url: "#calendar",
-      icon: IconCalendar,
-      tab: "calendar" as const,
-    },
-    {
-      title: "Profile",
-      url: "#profile",
-      icon: IconUser,
-      tab: "profile" as const,
-    },
-    {
       title: "Search Players",
       url: "#search",
       icon: IconSearch,
@@ -59,7 +45,7 @@ export function CoachAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
   const { logout } = useAuthStore()
   const router = useRouter()
 
-  const handleItemClick = (tab: "players" | "calendar" | "profile" | "search") => {
+  const handleItemClick = (tab: "players" | "search") => {
     setActiveTab(tab)
   }
 

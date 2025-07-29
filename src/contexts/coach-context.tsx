@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState } from "react"
 
-export type CoachTab = "players" | "calendar" | "profile" | "search"
+export type CoachTab = "players" | "profile" | "search"
 
 interface Player {
   id: string

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { 
   Star, 
-  Plus, 
+  Search, 
   Edit, 
   Calendar,
   MapPin,
@@ -32,6 +32,7 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from "lucide-react"
+import { FullScreenCalendar } from "@/components/coach/dashboard/full-screen-calendar"
 
 interface Player {
   id: string
@@ -48,13 +49,41 @@ interface Player {
   labels: string[]
 }
 
+interface Event {
+  id: number
+  name: string
+  time: string
+  datetime: string
+}
+
+interface CalendarData {
+  day: Date
+  events: Event[]
+}
+
+const initialCalendarData: CalendarData[] = [
+  {
+    day: new Date("2024-07-28T10:00:00.000Z"),
+    events: [
+      { id: 1, name: "Design Review", time: "10:00 AM", datetime: "2024-07-28T10:00:00.000Z" },
+      { id: 2, name: "Team Sync", time: "2:00 PM", datetime: "2024-07-28T14:00:00.000Z" },
+    ],
+  },
+  {
+    day: new Date("2024-07-12T10:00:00.000Z"),
+    events: [{ id: 3, name: "Product Demo", time: "1:00 PM", datetime: "2024-07-12T13:00:00.000Z" }],
+  },
+  // Add more data as needed
+]
+
 export function CoachesTab() {
-  const { players, updatePlayerRating, addPlayerNote, addPlayerLabel } = useCoach()
+  const { players, updatePlayerRating, addPlayerNote, addPlayerLabel, setActiveTab } = useCoach()
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [newNote, setNewNote] = useState("")
   const [newLabel, setNewLabel] = useState("")
   const [showNoteDialog, setShowNoteDialog] = useState(false)
   const [showLabelDialog, setShowLabelDialog] = useState(false)
+  const [calendarData, setCalendarData] = useState(initialCalendarData)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -80,6 +109,22 @@ export function CoachesTab() {
     }
   }
 
+  const handleSearchPlayers = () => {
+    setActiveTab("search")
+  }
+
+  const handleAddEvent = (event: Omit<Event, 'id'>) => {
+    const newEvent = { ...event, id: Date.now() }
+    const eventDate = new Date(newEvent.datetime)
+    const existingDay = calendarData.find(d => d.day.toDateString() === eventDate.toDateString())
+
+    if (existingDay) {
+      setCalendarData(calendarData.map(d => d.day.toDateString() === eventDate.toDateString() ? { ...d, events: [...d.events, newEvent] } : d))
+    } else {
+      setCalendarData([...calendarData, { day: eventDate, events: [newEvent] }])
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString()
   }
@@ -100,15 +145,15 @@ export function CoachesTab() {
   const goToNextPage = () => goToPage(currentPage + 1)
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Players</h1>
           <p className="text-muted-foreground">Manage and track your players</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Player
+        <Button onClick={handleSearchPlayers}>
+          <Search className="h-4 w-4 mr-2" />
+          Search Players
         </Button>
       </div>
 
@@ -320,6 +365,19 @@ export function CoachesTab() {
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Calendar Section */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-card-foreground flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Calendar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FullScreenCalendar data={calendarData} onAddEvent={handleAddEvent} />
         </CardContent>
       </Card>
     </div>

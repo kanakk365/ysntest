@@ -1,16 +1,11 @@
 "use client"
 
-import { CoachAppSidebar } from "@/components/coach/navigation/coach-app-sidebar"
 import { CoachTabs } from "@/components/coach/dashboard/coach-tabs"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 import { CoachProvider } from "@/contexts/coach-context"
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
 
 export default function CoachDashboard() {
   const { user, isAuthenticated, loading } = useAuthStore()
@@ -44,26 +39,11 @@ export default function CoachDashboard() {
 
   return (
     <CoachProvider>
-      <div className="h-screen">
-        <SidebarProvider
-          className="flex h-full"
-          style={
-            {
-              "--sidebar-width": "calc(var(--spacing) * 72)",
-              "--header-height": "calc(var(--spacing) * 12)",
-            } as React.CSSProperties
-          }
-        >
-          <div className="flex h-full w-full">
-            <CoachAppSidebar variant="inset" />
-            <SidebarInset className="flex-1 h-full flex flex-col">
-              <SiteHeader />
-              <div className="flex-1 p-4 lg:p-6">
-                <CoachTabs />
-              </div>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
+      <div className="h-screen flex flex-col">
+        <SiteHeader />
+        <div className="flex-1 p-4 lg:p-6 overflow-auto">
+          <CoachTabs />
+        </div>
       </div>
     </CoachProvider>
   )

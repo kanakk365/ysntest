@@ -3,6 +3,7 @@
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar-zustand"
 import { NavUser } from "@/components/superAdmin/navigation/nav-user"
+import { CoachProfilePopover } from "@/components/coach/navigation/coach-profile-popover"
 import { NotificationIcon, MessageIcon } from "@/components/superAdmin/navigation/header-notifications"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuthStore } from "@/lib/auth-store"
@@ -16,6 +17,9 @@ export function SiteHeader() {
     email: user?.email || "user@example.com",
     avatar: "/avatars/user.jpg",
   }
+  
+  // Check if user is a coach (user_type === 3)
+  const isCoach = user?.user_type === 3
   
   return (
     <header className="flex h-(--header-height) pt-4 pr-4 pb-2 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -31,7 +35,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-4">
           <NotificationIcon />
           <MessageIcon />
-          <NavUser user={userData} />
+          {isCoach ? <CoachProfilePopover /> : <NavUser user={userData} />}
         </div>
       </div>
     </header>
