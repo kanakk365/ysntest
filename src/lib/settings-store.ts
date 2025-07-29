@@ -1,39 +1,27 @@
 import { create } from 'zustand'
-import { api } from './api'
-
-interface SettingsData {
-  live_id?: number
-  live_orgz_id: number
-  live_svtm_id: number
-  live_video_id: string
-  live_chat_flag: boolean
-  live_twitch_flag: number // 0-Off, 1-On
-  live_created?: string
-  live_modified?: string
-  live_status?: number
-}
-
-interface ApiResponse {
-  status: boolean
-  data?: SettingsData
-  message: string
-}
+import { api, SettingsData, SettingsUI, SettingsResponse } from './api'
 
 interface SettingsState {
-  settings: SettingsData
+  settings: SettingsUI
   loading: boolean
   error: string | null
   
   // Actions
   fetchSettings: () => Promise<void>
-  updateSettings: (settings: SettingsData) => Promise<boolean>
-  setSettings: (settings: SettingsData) => void
+  updateSettings: (apiData: {
+    live_orgz_id: number
+    live_svtm_id: number
+    live_video_id: string
+    live_chat_flag: number
+    live_twitch_flag: number
+  }) => Promise<boolean>
+  setSettings: (settings: SettingsUI) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   reset: () => void
 }
 
-const defaultSettings: SettingsData = {
+const defaultSettings: SettingsUI = {
   live_orgz_id: 1,
   live_svtm_id: 2,
   live_video_id: "ysnetwork",
@@ -50,14 +38,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ loading: true, error: null })
     
     try {
-      const response = await api.get('https://beta.ysn.tv/api/settings')
-      const data: ApiResponse = await response.json()
+      const response: SettingsResponse = await api.settings.get()
 
-      if (data.status === true && data.data) {
-        set({ settings: data.data, loading: false })
+      if (response.status === true && response.data) {
+        // Convert API response to UI format
+        const settings: SettingsUI = {
+          ...response.data,
+          live_chat_flag: response.data.live_chat_flag === 1
+        }
+        set({ settings, loading: false })
       } else {
         set({ 
-          error: data.message || 'Failed to fetch settings', 
+          error: response.message || 'Failed to fetch settings', 
           loading: false 
         })
       }
@@ -70,21 +62,29 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  updateSettings: async (settings: SettingsData) => {
+  updateSettings: async (apiData: {
+    live_orgz_id: number
+    live_svtm_id: number
+    live_video_id: string
+    live_chat_flag: number
+    live_twitch_flag: number
+  }) => {
     set({ loading: true, error: null })
     
     try {
-      const response = await api.post('https://beta.ysn.tv/api/settings', settings)
-      const data: ApiResponse = await response.json()
+      const response: SettingsResponse = await api.settings.update(apiData)
 
-      if (data.status === true) {
-        // Update with response data if available
-        const updatedSettings = data.data || settings
+      if (response.status === true) {
+        // Convert the response data back to UI format
+        const updatedSettings: SettingsUI = {
+          ...response.data,
+          live_chat_flag: response.data.live_chat_flag === 1
+        }
         set({ settings: updatedSettings, loading: false })
         return true
       } else {
         set({ 
-          error: data.message || 'Failed to update settings', 
+          error: response.message || 'Failed to update settings', 
           loading: false 
         })
         return false
@@ -99,7 +99,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  setSettings: (settings: SettingsData) => {
+  setSettings: (settings: SettingsUI) => {
     set({ settings })
   },
 

@@ -94,6 +94,38 @@ export interface UserProfileResponse {
   message: string
 }
 
+// Settings API Types
+export interface SettingsData {
+  live_id?: number
+  live_orgz_id: number
+  live_svtm_id: number
+  live_video_id: string
+  live_chat_flag: number // API format: 0 or 1
+  live_twitch_flag: number // 0-Off, 1-On
+  live_created?: string
+  live_modified?: string
+  live_status?: number
+}
+
+// UI format for frontend
+export interface SettingsUI {
+  live_id?: number
+  live_orgz_id: number
+  live_svtm_id: number
+  live_video_id: string
+  live_chat_flag: boolean // UI format: true/false
+  live_twitch_flag: number // 0-Off, 1-On
+  live_created?: string
+  live_modified?: string
+  live_status?: number
+}
+
+export interface SettingsResponse {
+  status: boolean
+  data: SettingsData
+  message: string
+}
+
 export const api = {
   async fetch(url: string, options: RequestInit = {}) {
     const { user } = useAuthStore.getState()
@@ -220,6 +252,19 @@ export const api = {
   userProfile: {
     async get(): Promise<UserProfileResponse> {
       const response = await api.get(`${BASE_URL}/user`)
+      return response.json()
+    },
+  },
+
+  // Settings API
+  settings: {
+    async get(): Promise<SettingsResponse> {
+      const response = await api.get(`${BASE_URL}/settings/admin`)
+      return response.json()
+    },
+
+    async update(data: Partial<SettingsData>): Promise<SettingsResponse> {
+      const response = await api.post(`${BASE_URL}/settings`, data)
       return response.json()
     },
   },

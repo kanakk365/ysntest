@@ -67,7 +67,16 @@ export function SettingsTab() {
       return
     }
 
-    const success = await updateSettings(settings)
+    // Prepare data for API (convert boolean to number for live_chat_flag)
+    const apiData = {
+      live_orgz_id: settings.live_orgz_id,
+      live_svtm_id: settings.live_svtm_id,
+      live_video_id: settings.live_video_id,
+      live_chat_flag: settings.live_chat_flag ? 1 : 0, // Convert boolean to number
+      live_twitch_flag: settings.live_twitch_flag
+    }
+
+    const success = await updateSettings(apiData)
     
     if (success) {
       toast.success("Settings saved successfully!")
@@ -252,29 +261,7 @@ export function SettingsTab() {
             </div>
           </div>
 
-          {/* Additional Information */}
-          {(settings.live_created || settings.live_modified) && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Additional Information</h3>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  {settings.live_id && (
-                    <p>Settings ID: {settings.live_id}</p>
-                  )}
-                  {settings.live_created && (
-                    <p>Created: {new Date(settings.live_created).toLocaleString()}</p>
-                  )}
-                  {settings.live_modified && (
-                    <p>Last Modified: {new Date(settings.live_modified).toLocaleString()}</p>
-                  )}
-                  {settings.live_status !== undefined && (
-                    <p>Status: {settings.live_status === 1 ? 'Active' : 'Inactive'}</p>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
+    
         </CardContent>
       </Card>
     </div>

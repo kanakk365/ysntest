@@ -25,10 +25,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { api, Coach, CoachType, CoachFormData } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -40,8 +42,11 @@ export function SuperAdminCoachesTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingCoach, setDeletingCoach] = useState<Coach | null>(null);
   const [editingCoach, setEditingCoach] = useState<Coach | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [newCoach, setNewCoach] = useState<CoachFormData>({
     org_id: "1",
     coach_fname: "",
@@ -214,11 +219,19 @@ export function SuperAdminCoachesTab() {
   };
 
   const handleDeleteCoach = async (hashId: string) => {
-    if (confirm("Are you sure you want to delete this coach?")) {
+    setDeletingCoach(coaches.find(c => c.coach_hash_id === hashId) || null);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deletingCoach) {
       try {
-        const response = await api.coaches.delete(hashId);
+        setDeleting(true);
+        const response = await api.coaches.delete(deletingCoach.coach_hash_id);
         if (response.status) {
           toast.success("Coach deleted successfully");
+          setIsDeleteModalOpen(false);
+          setDeletingCoach(null);
           fetchCoaches(); // Refresh the list
         } else {
           toast.error(response.message || "Failed to delete coach");
@@ -226,6 +239,8 @@ export function SuperAdminCoachesTab() {
       } catch (error) {
         console.error("Error deleting coach:", error);
         toast.error("Failed to delete coach");
+      } finally {
+        setDeleting(false);
       }
     }
   };
@@ -618,6 +633,40 @@ export function SuperAdminCoachesTab() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete coach{" "}
+              <span className="font-semibold">
+                {deletingCoach ? `${deletingCoach.coach_fname} ${deletingCoach.coach_lname}` : ""}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

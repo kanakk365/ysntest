@@ -11,6 +11,7 @@ import { api, UserProfile } from "@/lib/api"
 
 export function ProfileTab() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [formData, setFormData] = useState<Partial<UserProfile>>({})
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,6 +19,20 @@ export function ProfileTab() {
   useEffect(() => {
     fetchUserProfile()
   }, [])
+
+  // Update form data when profile changes
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        email: profile.email,
+        user_mobile: profile.user_mobile,
+        user_dob: profile.user_dob,
+        user_college_name: profile.user_college_name,
+        user_fname: profile.user_fname,
+        user_lname: profile.user_lname,
+      })
+    }
+  }, [profile])
 
   const fetchUserProfile = async () => {
     try {
@@ -38,8 +53,30 @@ export function ProfileTab() {
     }
   }
 
+  const handleInputChange = (field: keyof UserProfile, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
   const handleSave = async () => {
     // Handle save logic here
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    // Reset form data to original profile values
+    if (profile) {
+      setFormData({
+        email: profile.email,
+        user_mobile: profile.user_mobile,
+        user_dob: profile.user_dob,
+        user_college_name: profile.user_college_name,
+        user_fname: profile.user_fname,
+        user_lname: profile.user_lname,
+      })
+    }
     setIsEditing(false)
   }
 
@@ -114,7 +151,8 @@ export function ProfileTab() {
               <Input
                 id="email"
                 type="email"
-                value={profile.email}
+                value={formData.email || ""}
+                onChange={(e) => handleInputChange("email", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -124,7 +162,8 @@ export function ProfileTab() {
               <Input
                 id="mobile"
                 type="tel"
-                value={profile.user_mobile || ""}
+                value={formData.user_mobile || ""}
+                onChange={(e) => handleInputChange("user_mobile", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -134,7 +173,8 @@ export function ProfileTab() {
               <Input
                 id="dob"
                 type="date"
-                value={profile.user_dob || ""}
+                value={formData.user_dob || ""}
+                onChange={(e) => handleInputChange("user_dob", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -143,7 +183,8 @@ export function ProfileTab() {
               <Label htmlFor="college">College Name</Label>
               <Input
                 id="college"
-                value={profile.user_college_name || ""}
+                value={formData.user_college_name || ""}
+                onChange={(e) => handleInputChange("user_college_name", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -152,7 +193,8 @@ export function ProfileTab() {
               <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
-                value={profile.user_fname}
+                value={formData.user_fname || ""}
+                onChange={(e) => handleInputChange("user_fname", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -161,7 +203,8 @@ export function ProfileTab() {
               <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
-                value={profile.user_lname}
+                value={formData.user_lname || ""}
+                onChange={(e) => handleInputChange("user_lname", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
@@ -170,7 +213,7 @@ export function ProfileTab() {
           <div className="flex justify-end gap-2">
             {isEditing ? (
               <>
-                <Button className="cursor-pointer" variant="outline" onClick={() => setIsEditing(false)}>
+                <Button className="cursor-pointer" variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
                 <Button className="cursor-pointer" onClick={handleSave}>
