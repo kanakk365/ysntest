@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { useCoach } from "@/contexts/coach-context"
+import { useState, useEffect } from "react"
+import { useCoachStore } from "@/lib/coach-store"
+import { api, SearchPlayer, Position, State } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,44 +22,104 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ArrowLeft,
+  Loader2,
 } from "lucide-react"
 import Image from "next/image"
 
-// Mock data - replace with your actual data
-const grades = ["9th", "10th", "11th", "12th"]
-const positions = ["QB", "RB", "WR", "TE", "OL", "DL", "LB", "DB", "K", "P"]
-const gradYears = ["2024", "2025", "2026", "2027", "2028"]
-const states = ["CA", "TX", "FL", "NY", "PA", "OH", "IL", "MI", "GA", "NC"]
-
-const mockPlayers = Array.from({ length: 50 }, (_, i) => ({
-  id: i + 1,
-  fullName: `Player ${i + 1}`,
-  grade: grades[Math.floor(Math.random() * grades.length)],
-  position: positions[Math.floor(Math.random() * positions.length)],
-  state: states[Math.floor(Math.random() * states.length)],
-  gradYear: gradYears[Math.floor(Math.random() * gradYears.length)],
-  act: Math.floor(Math.random() * 15) + 20,
-  sat: Math.floor(Math.random() * 600) + 1000,
-  gpa: (Math.random() * 2 + 2).toFixed(2),
-  rating: (Math.random() * 2 + 3).toFixed(1),
-  profilePic: Math.random() > 0.5 ? `/placeholder.svg?height=200&width=200&text=Player${i + 1}` : null,
-}))
-
 export function CoachSearchTab() {
-  const { setActiveTab } = useCoach()
+  const { setActiveTab } = useCoachStore()
   const [searchTerm, setSearchTerm] = useState("")
+
+  // Helper function to validate image URLs
+  const isValidImageUrl = (url: string): boolean => {
+    if (!url) return false
+    try {
+      const urlObj = new URL(url)
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
   const [selectedGrade, setSelectedGrade] = useState("all")
   const [selectedPosition, setSelectedPosition] = useState("all")
   const [selectedGradYear, setSelectedGradYear] = useState("all")
   const [selectedState, setSelectedState] = useState("all")
-  const [searchResults, setSearchResults] = useState(mockPlayers)
+  const [searchResults, setSearchResults] = useState<SearchPlayer[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasSearched, setHasSearched] = useState(false)
+  const [filters, setFilters] = useState<{
+    positions: Position[]
+    years: number[]
+    states: State[]
+  }>({
+    positions: [],
+    years: [],
+    states: []
+  })
   const resultsPerPage = 12
 
-  const handleSearch = () => {
-    // Mock search logic
-    setSearchResults(mockPlayers.filter((player) => player.fullName.toLowerCase().includes(searchTerm.toLowerCase())))
-    setCurrentPage(1)
+  // Fetch filters on component mount
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        setLoading(true)
+        const response = await api.players.getSearchFilters()
+        if (response.status) {
+          setFilters({
+            positions: response.data.position,
+            years: response.data.years,
+            states: response.data.states
+          })
+        } else {
+          setError(response.message || "Failed to fetch filters")
+        }
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Failed to fetch filters")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchFilters()
+  }, [])
+
+
+
+  const handleSearch = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Build search parameters
+      const searchParams: {
+        search?: string
+        grade?: string
+        position?: string
+        year?: string
+        state?: string
+      } = {}
+      
+      if (searchTerm.trim()) searchParams.search = searchTerm.trim()
+      if (selectedGrade !== 'all') searchParams.grade = selectedGrade
+      if (selectedPosition !== 'all') searchParams.position = selectedPosition
+      if (selectedGradYear !== 'all') searchParams.year = selectedGradYear
+      if (selectedState !== 'all') searchParams.state = selectedState
+      
+      const response = await api.players.search(searchParams)
+      if (response.status) {
+        setSearchResults(response.data)
+        setCurrentPage(1)
+        setHasSearched(true)
+      } else {
+        setError(response.message || "Failed to search players")
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to search players")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleFollow = (playerId: number) => {
@@ -159,11 +220,10 @@ export function CoachSearchTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Grades</SelectItem>
-                      {grades.map((grade) => (
-                        <SelectItem key={grade} value={grade}>
-                          {grade}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="9th">9th Grade</SelectItem>
+                      <SelectItem value="10th">10th Grade</SelectItem>
+                      <SelectItem value="11th">11th Grade</SelectItem>
+                      <SelectItem value="12th">12th Grade</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -179,9 +239,9 @@ export function CoachSearchTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Positions</SelectItem>
-                      {positions.map((position) => (
-                        <SelectItem key={position} value={position}>
-                          {position}
+                      {filters.positions.map((position) => (
+                        <SelectItem key={position.plps_id} value={position.plps_id.toString()}>
+                          {position.plps_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -199,8 +259,8 @@ export function CoachSearchTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Years</SelectItem>
-                      {gradYears.map((year) => (
-                        <SelectItem key={year} value={year}>
+                      {filters.years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
                           {year}
                         </SelectItem>
                       ))}
@@ -219,9 +279,9 @@ export function CoachSearchTab() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All States</SelectItem>
-                      {states.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state}
+                      {filters.states.map((state) => (
+                        <SelectItem key={state.stat_id} value={state.stat_code}>
+                          {state.stat_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -234,24 +294,33 @@ export function CoachSearchTab() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button
                 onClick={handleSearch}
+                disabled={loading}
                 className="flex-1 sm:flex-none sm:min-w-[160px] h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transition-all"
               >
-                <Search className="h-4 w-4 mr-2" />
-                Search Players
+                {loading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4 mr-2" />
+                )}
+                {loading ? "Searching..." : "Search Players"}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm("")
-                  setSelectedGrade("all")
-                  setSelectedPosition("all")
-                  setSelectedGradYear("all")
-                  setSelectedState("all")
-                }}
-                className="flex-1 sm:flex-none sm:min-w-[120px] h-12 border-border/50 hover:bg-accent/10 font-medium"
-              >
-                Clear Filters
-              </Button>
+                             <Button
+                 variant="outline"
+                 onClick={() => {
+                   setSearchTerm("")
+                   setSelectedGrade("all")
+                   setSelectedPosition("all")
+                   setSelectedGradYear("all")
+                   setSelectedState("all")
+                   setSearchResults([])
+                   setHasSearched(false)
+                   setCurrentPage(1)
+                   setError(null)
+                 }}
+                 className="flex-1 sm:flex-none sm:min-w-[120px] h-12 border-border/50 hover:bg-accent/10 font-medium"
+               >
+                 Clear Filters
+               </Button>
             </div>
           </CardContent>
         </Card>
@@ -267,189 +336,219 @@ export function CoachSearchTab() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Results Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-              {currentResults.map((player) => (
-                <div key={player.id} className="group">
-                  <Card className=" p-0 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer border-border/50 bg-card/80 backdrop-blur-sm">
-                    <div className="relative">
-                      {/* Player Image */}
-                      <div
-                        className="relative w-full h-52 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 flex items-center justify-center cursor-pointer overflow-hidden"
-                        onClick={() => handlePlayerClick(player.id)}
-                      >
-                        {player.profilePic ? (
-                          <Image
-                            src={player.profilePic || "/placeholder.svg"}
-                            alt={player.fullName}
-                            fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center text-muted-foreground">
-                            <div className="p-4 rounded-full bg-primary/10 mb-3">
-                              <User className="h-12 w-12 text-primary" />
-                            </div>
-                            <span className="text-sm font-medium">No Photo</span>
-                          </div>
-                        )}
+            {/* Error Display */}
+            {error && (
+              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive text-sm font-medium">{error}</p>
+              </div>
+            )}
 
-                        {/* Rating Badge */}
-                        <div className="absolute top-3 right-3 flex items-center gap-1 bg-background/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                          <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                          <span className="text-xs font-bold text-foreground">{player.rating}</span>
-                        </div>
-
-                        {/* Hover Overlay */}
-                        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center p-6">
-                          <div className="text-center text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                            <h3 className="font-bold text-lg mb-2">{player.fullName}</h3>
-                            <Badge variant="secondary" className="mb-3 bg-primary/20 text-white border-white/20">
-                              {player.position}
-                            </Badge>
-                            <div className="text-sm space-y-1 opacity-90">
-                              <p className="font-medium">
-                                {player.grade} • {player.state}
-                              </p>
-                              <div className="flex justify-center gap-4 text-xs">
-                                <span>ACT: {player.act}</span>
-                                <span>SAT: {player.sat}</span>
-                              </div>
-                              <p className="text-xs">
-                                GPA: {player.gpa} • Class of {player.gradYear}
-                              </p>
-                            </div>
-                          </div>
-                        </div> */}
-                      </div>
-
-                      {/* Player Info */}
-                      <div className="p-5">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-foreground text-base truncate mb-1">{player.fullName}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {player.grade} • {player.state}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary">
-                            {player.position}
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 text-xs mb-4">
-                          <div className="bg-muted/30 rounded-lg p-2 text-center">
-                            <div className="font-semibold text-foreground">ACT</div>
-                            <div className="text-muted-foreground">{player.act}</div>
-                          </div>
-                          <div className="bg-muted/30 rounded-lg p-2 text-center">
-                            <div className="font-semibold text-foreground">SAT</div>
-                            <div className="text-muted-foreground">{player.sat}</div>
-                          </div>
-                          <div className="bg-muted/30 rounded-lg p-2 text-center">
-                            <div className="font-semibold text-foreground">GPA</div>
-                            <div className="text-muted-foreground">{player.gpa}</div>
-                          </div>
-                          <div className="bg-muted/30 rounded-lg p-2 text-center">
-                            <div className="font-semibold text-foreground">Year</div>
-                            <div className="text-muted-foreground">{player.gradYear}</div>
-                          </div>
-                        </div>
-
-                        <Button
-                       
-                          size="sm"
-                          className="w-full h-9 border-2 bg-transparent border-primary hover:bg-primary/20  font-medium transition-all shadow-sm text-primary"
-                          onClick={() => handleFollow(player.id)}
-                        >
-                          Follow Player
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="text-muted-foreground">Loading players...</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {/* Initial State - No Search Performed */}
+            {!loading && !error && !hasSearched && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="p-4 rounded-full bg-primary/10 mb-4">
+                  <Search className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Ready to Search</h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  Select your filters and click &quot;Search Players&quot; to find athletes that match your criteria.
+                </p>
+              </div>
+            )}
+
+            {/* No Results State */}
+            {!loading && !error && hasSearched && searchResults.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="p-4 rounded-full bg-muted/20 mb-4">
+                  <Users className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No players found</h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  Try adjusting your search criteria or filters to find more players.
+                </p>
+              </div>
+            )}
+
+            {/* Results Grid */}
+            {!loading && !error && hasSearched && searchResults.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                {currentResults.map((player) => (
+                  <div key={player.hash_id} className="group">
+                    <Card className=" p-0 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer border-border/50 bg-card/80 backdrop-blur-sm">
+                      <div className="relative">
+                                                 {/* Player Image */}
+                         <div
+                           className="relative w-full h-52 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10 flex items-center justify-center cursor-pointer overflow-hidden"
+                           onClick={() => handlePlayerClick(player.kids_id)}
+                         >
+                           {player.kids_avatar && isValidImageUrl(player.kids_avatar) ? (
+                             <Image
+                               src={player.kids_avatar}
+                               alt={`${player.kids_fname} ${player.kids_lname}`}
+                               fill
+                               className="object-cover transition-transform duration-300 group-hover:scale-110"
+                               onError={(e) => {
+                                 // Fallback to placeholder if image fails to load
+                                 const target = e.target as HTMLImageElement
+                                 target.style.display = 'none'
+                                 target.nextElementSibling?.classList.remove('hidden')
+                               }}
+                             />
+                           ) : null}
+                           <div className={`flex flex-col items-center justify-center text-muted-foreground ${player.kids_avatar && isValidImageUrl(player.kids_avatar) ? 'hidden' : ''}`}>
+                             <div className="p-4 rounded-full bg-primary/10 mb-3">
+                               <User className="h-12 w-12 text-primary" />
+                             </div>
+                             <span className="text-sm font-medium">No Photo</span>
+                           </div>
+
+                          {/* Rating Badge */}
+                          <div className="absolute top-3 right-3 flex items-center gap-1 bg-background/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                            <span className="text-xs font-bold text-foreground">4.5</span>
+                          </div>
+                        </div>
+
+                        {/* Player Info */}
+                        <div className="p-5">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground text-base truncate mb-1">{`${player.kids_fname} ${player.kids_lname}`}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {player.kids_graduating_class || "N/A"} • {player.graduating_year}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs font-medium border-primary/30 text-primary">
+                              {player.main_position}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+                            <div className="bg-muted/30 rounded-lg p-2 text-center">
+                              <div className="font-semibold text-foreground">ACT</div>
+                              <div className="text-muted-foreground">{player.kids_act || "N/A"}</div>
+                            </div>
+                            <div className="bg-muted/30 rounded-lg p-2 text-center">
+                              <div className="font-semibold text-foreground">SAT</div>
+                              <div className="text-muted-foreground">{player.kids_sat || "N/A"}</div>
+                            </div>
+                            <div className="bg-muted/30 rounded-lg p-2 text-center">
+                              <div className="font-semibold text-foreground">GPA</div>
+                              <div className="text-muted-foreground">{player.kids_gpa || "N/A"}</div>
+                            </div>
+                            <div className="bg-muted/30 rounded-lg p-2 text-center">
+                              <div className="font-semibold text-foreground">Year</div>
+                              <div className="text-muted-foreground">{player.graduating_year}</div>
+                            </div>
+                          </div>
+
+                          <Button
+                         
+                            size="sm"
+                            className="w-full h-9 border-2 bg-transparent border-primary hover:bg-primary/20  font-medium transition-all shadow-sm text-primary"
+                            onClick={() => handleFollow(player.kids_id)}
+                          >
+                            Follow Player
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Enhanced Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/30">
-              <div className="text-sm text-muted-foreground font-medium">
-                Showing <span className="text-foreground font-semibold">{startIndex + 1}</span> to{" "}
-                <span className="text-foreground font-semibold">{Math.min(endIndex, searchResults.length)}</span> of{" "}
-                <span className="text-foreground font-semibold">{searchResults.length}</span> players
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToFirstPage}
-                  disabled={currentPage === 1}
-                  className="h-9 w-9 p-0 border-border/50 bg-transparent"
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPreviousPage}
-                  disabled={currentPage === 1}
-                  className="h-9 w-9 p-0 border-border/50 bg-transparent"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum
-                    if (totalPages <= 5) {
-                      pageNum = i + 1
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i
-                    } else {
-                      pageNum = currentPage - 2 + i
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(pageNum)}
-                        className={`h-9 w-9 p-0 font-medium ${
-                          currentPage === pageNum
-                            ? "bg-primary text-primary-foreground shadow-md"
-                            : "border-border/50 hover:bg-accent/10"
-                        }`}
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
+            {!loading && !error && hasSearched && searchResults.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-border/30">
+                <div className="text-sm text-muted-foreground font-medium">
+                  Showing <span className="text-foreground font-semibold">{startIndex + 1}</span> to{" "}
+                  <span className="text-foreground font-semibold">{Math.min(endIndex, searchResults.length)}</span> of{" "}
+                  <span className="text-foreground font-semibold">{searchResults.length}</span> players
                 </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNextPage}
-                  disabled={currentPage === totalPages}
-                  className="h-9 w-9 p-0 border-border/50 bg-transparent"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToLastPage}
-                  disabled={currentPage === totalPages}
-                  className="h-9 w-9 p-0 border-border/50 bg-transparent"
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToFirstPage}
+                    disabled={currentPage === 1}
+                    className="h-9 w-9 p-0 border-border/50 bg-transparent"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className="h-9 w-9 p-0 border-border/50 bg-transparent"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum
+                      if (totalPages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
+
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => goToPage(pageNum)}
+                          className={`h-9 w-9 p-0 font-medium ${
+                            currentPage === pageNum
+                              ? "bg-primary text-primary-foreground shadow-md"
+                              : "border-border/50 hover:bg-accent/10"
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      )
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className="h-9 w-9 p-0 border-border/50 bg-transparent"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToLastPage}
+                    disabled={currentPage === totalPages}
+                    className="h-9 w-9 p-0 border-border/50 bg-transparent"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

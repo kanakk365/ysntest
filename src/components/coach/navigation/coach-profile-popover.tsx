@@ -1,10 +1,10 @@
 "use client"
 
 import { useAuthStore } from "@/lib/auth-store"
-import { useCoach } from "@/contexts/coach-context"
+import { useCoachStore } from "@/lib/coach-store"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { User, Settings, LogOut } from "lucide-react"
+import { User, Settings, LogOut, Sun, Moon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,10 +14,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 
 export function CoachProfilePopover() {
-  const { user } = useAuthStore()
-  const { setActiveTab } = useCoach()
+  const { user , logout } = useAuthStore()
+  const { setActiveTab } = useCoachStore()
+  const { theme, setTheme } = useTheme()
   const router = useRouter()
   
   const handleProfileClick = () => {
@@ -26,7 +28,12 @@ export function CoachProfilePopover() {
 
   const handleLogout = async () => {
     // Add logout logic here
+    logout()
     router.push("/login")
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light")
   }
 
   return (
@@ -56,6 +63,14 @@ export function CoachProfilePopover() {
         <DropdownMenuItem>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={toggleTheme}>
+          {theme === "light" ? (
+            <Moon className="mr-2 h-4 w-4" />
+          ) : (
+            <Sun className="mr-2 h-4 w-4" />
+          )}
+          <span>{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

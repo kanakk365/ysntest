@@ -7,6 +7,7 @@ import { CoachProfilePopover } from "@/components/coach/navigation/coach-profile
 import { NotificationIcon, MessageIcon } from "@/components/superAdmin/navigation/header-notifications"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuthStore } from "@/lib/auth-store"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function SiteHeader() {
   const isMobile = useIsMobile()
@@ -22,7 +23,7 @@ export function SiteHeader() {
   const isCoach = user?.user_type === 3
   
   return (
-    <header className="flex h-(--header-height) pt-4 pr-4 pb-2 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="flex h-(--header-height) pt-4 pr-4 pb-2 shrink-0 items-center gap-2 border-b bg-background border-border transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         {isMobile && <SidebarTrigger className="-ml-1" />}
         {isMobile && (
@@ -35,6 +36,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-4">
           <NotificationIcon />
           <MessageIcon />
+          <ThemeToggle />
           {isCoach ? <CoachProfilePopover /> : <NavUser user={userData} />}
         </div>
       </div>

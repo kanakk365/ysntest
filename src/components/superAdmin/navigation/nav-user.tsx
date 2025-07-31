@@ -5,9 +5,12 @@ import {
   IconLogout,
   IconNotification,
   IconUserCircle,
+  IconSun,
+  IconMoon,
 } from "@tabler/icons-react"
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 
 import {
   Avatar,
@@ -35,11 +38,16 @@ export function NavUser({
   }
 }) {
   const { logout } = useAuthStore()
+  const { theme, setTheme } = useTheme()
   const router = useRouter()
   
   const handleLogout = async () => {
     await logout()
     router.push("/login")
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light")
   }
 
   return (
@@ -74,6 +82,14 @@ export function NavUser({
           <DropdownMenuItem>
             <IconNotification className="mr-2 h-4 w-4" />
             <span>Notifications</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={toggleTheme}>
+            {theme === "light" ? (
+              <IconMoon className="mr-2 h-4 w-4" />
+            ) : (
+              <IconSun className="mr-2 h-4 w-4" />
+            )}
+            <span>{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

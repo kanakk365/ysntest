@@ -188,7 +188,7 @@ export function SuperAdminCoachesTab() {
       try {
         setSubmitting(true);
         const formData = createFormData({
-          coach_id: editingCoach.coach_hash_id,
+          coach_id: editingCoach.coach_id.toString(),
           org_id: "1",
           coach_fname: editingCoach.coach_fname,
           coach_lname: editingCoach.coach_lname,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react"
-import { useCoach } from "@/contexts/coach-context"
+import { useCoachStore } from "@/lib/coach-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 
 export function CoachesTab() {
-  const { players, updatePlayerRating, addPlayerNote, addPlayerLabel } = useCoach()
+  const { players, updatePlayerRating, addPlayerNote, addPlayerLabel } = useCoachStore()
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null)
   const [newNote, setNewNote] = useState("")
   const [newLabel, setNewLabel] = useState("")

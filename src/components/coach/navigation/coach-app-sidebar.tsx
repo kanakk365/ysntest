@@ -6,7 +6,7 @@ import {
   IconSearch,
   IconLogout,
 } from "@tabler/icons-react"
-import { useCoach } from "@/contexts/coach-context"
+import { useCoachStore } from "@/lib/coach-store"
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 
@@ -41,7 +41,7 @@ const coachNavData = {
 }
 
 export function CoachAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { activeTab, setActiveTab } = useCoach()
+  const { activeTab, setActiveTab } = useCoachStore()
   const { logout } = useAuthStore()
   const router = useRouter()
 

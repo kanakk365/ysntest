@@ -150,7 +150,16 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile])
 
-  const filteredData = chartData.filter((item) => {
+  // Ensure chartData is defined and is an array
+  const safeChartData = Array.isArray(chartData) ? chartData : []
+  
+  // Debug logging
+  console.log('chartData:', chartData)
+  console.log('safeChartData:', safeChartData)
+  console.log('timeRange:', timeRange)
+  
+  const filteredData = safeChartData.filter((item) => {
+    if (!item || !item.date) return false
     const date = new Date(item.date)
     const referenceDate = new Date("2024-06-30")
     let daysToSubtract = 90
@@ -162,7 +171,9 @@ export function ChartAreaInteractive() {
     const startDate = new Date(referenceDate)
     startDate.setDate(startDate.getDate() - daysToSubtract)
     return date >= startDate
-  })
+  }) || []
+  
+  console.log('filteredData:', filteredData)
 
   return (
     <Card className="@container/card">
@@ -213,7 +224,8 @@ export function ChartAreaInteractive() {
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
+          {filteredData && filteredData.length > 0 ? (
+            <AreaChart data={filteredData}>
             <defs>
               <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -284,7 +296,12 @@ export function ChartAreaInteractive() {
               stroke="var(--color-desktop)"
               stackId="a"
             />
-          </AreaChart>
+            </AreaChart>
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              No data available
+            </div>
+          )}
         </ChartContainer>
       </CardContent>
     </Card>

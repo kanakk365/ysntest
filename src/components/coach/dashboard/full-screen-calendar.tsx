@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react"
 
 interface Event {
   id: number
@@ -42,16 +43,32 @@ interface CalendarData {
 interface FullScreenCalendarProps {
   data: CalendarData[],
   onAddEvent: (event: Omit<Event, 'id'>) => void;
+  onEditEvent?: (event: Event) => void;
+  onDeleteEvent?: (eventId: number) => void;
 }
 
 const colStartClasses = ["", "col-start-2", "col-start-3", "col-start-4", "col-start-5", "col-start-6", "col-start-7"]
 
-export function FullScreenCalendar({ data, onAddEvent }: FullScreenCalendarProps) {
+export function FullScreenCalendar({ data, onAddEvent, onEditEvent, onDeleteEvent }: FullScreenCalendarProps) {
   const today = startOfToday()
   const [selectedDay, setSelectedDay] = React.useState(today)
   const [currentMonth, setCurrentMonth] = React.useState(format(today, "MMM-yyyy"))
   const firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date())
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    startDate: "",
+    startTime: "",
+    endDate: "",
+    endTime: "",
+    isRecur: false,
+    isAllDay: false,
+    eventUrl: "",
+    location: "",
+    description: ""
+  })
 
   const days = eachDayOfInterval({
     start: startOfWeek(firstDayCurrentMonth),
@@ -70,6 +87,86 @@ export function FullScreenCalendar({ data, onAddEvent }: FullScreenCalendarProps
 
   function goToToday() {
     setCurrentMonth(format(today, "MMM-yyyy"))
+  }
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event)
+    const eventDate = new Date(event.datetime)
+    setFormData({
+      name: event.name,
+      startDate: eventDate.toISOString().split('T')[0],
+      startTime: eventDate.toTimeString().split(' ')[0],
+      endDate: eventDate.toISOString().split('T')[0], // Default to same date
+      endTime: eventDate.toTimeString().split(' ')[0], // Default to same time
+      isRecur: false,
+      isAllDay: false,
+      eventUrl: "",
+      location: "",
+      description: ""
+    })
+    setIsDialogOpen(true)
+  }
+
+  const handleSaveEvent = () => {
+    if (formData.name && formData.startDate && formData.startTime) {
+      // Create a proper datetime string without the extra :00
+      const eventData = {
+        name: formData.name,
+        time: new Date(`${formData.startDate}T${formData.startTime}`).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        }),
+        datetime: `${formData.startDate}T${formData.startTime}.000Z`,
+        // Additional event data
+        endDate: formData.endDate || formData.startDate,
+        endTime: formData.endTime || formData.startTime,
+        isRecur: formData.isRecur,
+        isAllDay: formData.isAllDay,
+        eventUrl: formData.eventUrl,
+        location: formData.location,
+        description: formData.description
+      }
+
+      if (editingEvent) {
+        onEditEvent?.({ ...eventData, id: editingEvent.id })
+      } else {
+        onAddEvent(eventData)
+      }
+
+      // Reset form
+      setFormData({ 
+        name: "", 
+        startDate: "", 
+        startTime: "", 
+        endDate: "", 
+        endTime: "", 
+        isRecur: false, 
+        isAllDay: false, 
+        eventUrl: "", 
+        location: "", 
+        description: "" 
+      })
+      setEditingEvent(null)
+      setIsDialogOpen(false)
+    }
+  }
+
+  const handleOpenAddDialog = () => {
+    setEditingEvent(null)
+    setFormData({ 
+      name: "", 
+      startDate: "", 
+      startTime: "", 
+      endDate: "", 
+      endTime: "", 
+      isRecur: false, 
+      isAllDay: false, 
+      eventUrl: "", 
+      location: "", 
+      description: "" 
+    })
+    setIsDialogOpen(true)
   }
 
   return (
@@ -131,57 +228,122 @@ export function FullScreenCalendar({ data, onAddEvent }: FullScreenCalendarProps
 
           <Separator orientation="vertical" className="hidden h-6 md:block" />
           <Separator orientation="horizontal" className="block w-full md:hidden" />
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={handleOpenAddDialog}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Event
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Event</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Event Name</Label>
-                  <Input
-                    id="event-name"
-                    placeholder="Enter event name"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Date</Label>
-                    <Input
-                      id="event-date"
-                      type="date"
-                    />
-                  </div>
-                  <div>
-                    <Label>Time</Label>
-                    <Input
-                      id="event-time"
-                      type="time"
-                    />
-                  </div>
-                </div>
-                <Button onClick={() => {
-                  const name = (document.getElementById('event-name') as HTMLInputElement).value;
-                  const date = (document.getElementById('event-date') as HTMLInputElement).value;
-                  const time = (document.getElementById('event-time') as HTMLInputElement).value;
-                  if(name && date && time) {
-                    onAddEvent({
-                      name,
-                      time,
-                      datetime: `${date}T${time}:00.000Z`
-                    })
-                  }
-                }} className="w-full">
-                  Add Event
-                </Button>
-              </div>
-            </DialogContent>
+                         <DialogContent className="max-w-md">
+               <DialogHeader>
+                 <DialogTitle>{editingEvent ? 'Edit Event' : 'Add New Event'}</DialogTitle>
+               </DialogHeader>
+               <div className="space-y-4">
+                 <div>
+                   <Label>Event Name *</Label>
+                   <Input
+                     value={formData.name}
+                     onChange={(e) => setFormData({...formData, name: e.target.value})}
+                     placeholder="Enter event name"
+                   />
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <Label>Start Date *</Label>
+                     <Input
+                       type="date"
+                       value={formData.startDate}
+                       onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                     />
+                   </div>
+                   <div>
+                     <Label>Start Time *</Label>
+                     <Input
+                       type="time"
+                       value={formData.startTime}
+                       onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                     />
+                   </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                   <div>
+                     <Label>End Date</Label>
+                     <Input
+                       type="date"
+                       value={formData.endDate}
+                       onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                     />
+                   </div>
+                   <div>
+                     <Label>End Time</Label>
+                     <Input
+                       type="time"
+                       value={formData.endTime}
+                       onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                     />
+                   </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="flex items-center space-x-2">
+                     <input
+                       type="checkbox"
+                       id="isRecur"
+                       checked={formData.isRecur}
+                       onChange={(e) => setFormData({...formData, isRecur: e.target.checked})}
+                       className="rounded border-gray-300"
+                     />
+                     <Label htmlFor="isRecur">Recurring Event</Label>
+                   </div>
+                   <div className="flex items-center space-x-2">
+                     <input
+                       type="checkbox"
+                       id="isAllDay"
+                       checked={formData.isAllDay}
+                       onChange={(e) => setFormData({...formData, isAllDay: e.target.checked})}
+                       className="rounded border-gray-300"
+                     />
+                     <Label htmlFor="isAllDay">All Day Event</Label>
+                   </div>
+                 </div>
+                 
+                 <div>
+                   <Label>Event URL</Label>
+                   <Input
+                     value={formData.eventUrl}
+                     onChange={(e) => setFormData({...formData, eventUrl: e.target.value})}
+                     placeholder="https://example.com"
+                     type="url"
+                   />
+                 </div>
+                 
+                 <div>
+                   <Label>Location</Label>
+                   <Input
+                     value={formData.location}
+                     onChange={(e) => setFormData({...formData, location: e.target.value})}
+                     placeholder="Enter event location"
+                   />
+                 </div>
+                 
+                 <div>
+                   <Label>Description</Label>
+                   <Textarea
+                     value={formData.description}
+                     onChange={(e) => setFormData({...formData, description: e.target.value})}
+                     placeholder="Enter event description"
+                     rows={3}
+                   />
+                 </div>
+                 
+                 <Button onClick={handleSaveEvent} className="w-full">
+                   {editingEvent ? 'Update Event' : 'Add Event'}
+                 </Button>
+               </div>
+             </DialogContent>
           </Dialog>
         </div>
       </div>
@@ -293,9 +455,23 @@ export function FullScreenCalendar({ data, onAddEvent }: FullScreenCalendarProps
                           {day.events.slice(0, 1).map((event) => (
                             <div
                               key={event.id}
-                              className="flex flex-col items-start gap-1 rounded-lg border bg-muted/50 p-2 text-xs leading-tight"
+                              className="flex flex-col items-start gap-1 rounded-lg border bg-muted/50 p-2 text-xs leading-tight hover:bg-muted/75 cursor-pointer group"
+                              onClick={() => handleEditEvent(event)}
                             >
-                              <p className="font-medium leading-none">{event.name}</p>
+                              <div className="flex items-center justify-between w-full">
+                                <p className="font-medium leading-none">{event.name}</p>
+                                {onDeleteEvent && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onDeleteEvent(event.id)
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </div>
                               <p className="leading-none text-muted-foreground">{event.time}</p>
                             </div>
                           ))}

@@ -2,7 +2,7 @@
 
 import { CoachTabs } from "@/components/coach/dashboard/coach-tabs"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
-import { CoachProvider } from "@/contexts/coach-context"
+
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
@@ -23,28 +23,26 @@ export default function CoachDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading...</div>
       </div>
     )
   }
 
   if (!isAuthenticated || user?.user_type !== 3) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Access denied. Redirecting...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Access denied. Redirecting...</div>
       </div>
     )
   }
 
   return (
-    <CoachProvider>
-      <div className="h-screen flex flex-col">
-        <SiteHeader />
-        <div className="flex-1 p-4 lg:p-6 overflow-auto">
-          <CoachTabs />
-        </div>
+    <div className="h-screen flex flex-col bg-background">
+      <SiteHeader />
+      <div className="flex-1 p-4 lg:p-6 overflow-auto">
+        <CoachTabs />
       </div>
-    </CoachProvider>
+    </div>
   )
 } 

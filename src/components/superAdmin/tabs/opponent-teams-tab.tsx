@@ -127,6 +127,7 @@ export function OpponentTeamsTab() {
     try {
       setSubmitting(true);
       const formData = new FormData();
+      formData.append("oppt_id", editingTeam.oppt_id.toString()); // Add team ID for update
       formData.append("oppt_team_name", editingTeam.oppt_team_name);
       if (editingTeam.oppt_team_logo) {
         // If there's a new logo file, add it

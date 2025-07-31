@@ -83,7 +83,7 @@ export function ProfileTab() {
   if (loading) {
     return (
       <div className="space-y-6 h-full bg-card flex items-center justify-center">
-        <Card className="h-full flex flex-col rounded-none max-w-6xl border-none">
+        <Card className="h-full flex flex-col rounded-none max-w-6xl border-none shadow-none">
           <CardContent className="flex items-center justify-center flex-1">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -98,7 +98,7 @@ export function ProfileTab() {
   if (error) {
     return (
       <div className="space-y-6 h-full bg-card flex items-center justify-center">
-        <Card className="h-full flex flex-col rounded-none max-w-6xl border-none">
+        <Card className="h-full flex flex-col rounded-none max-w-6xl border-none shadow-none">
           <CardContent className="flex items-center justify-center flex-1">
             <div className="text-center">
               <p className="text-destructive mb-4">{error}</p>
@@ -126,7 +126,7 @@ export function ProfileTab() {
 
   return (
     <div className="space-y-6 h-full bg-card flex items-center">
-      <Card className="h-full w-full flex flex-col pt-20 rounded-none max-w-6xl m-auto border-none bg-card">
+      <Card className="shadow-none h-full w-full flex flex-col pt-20 rounded-none max-w-6xl m-auto border-none bg-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-4">
             <Avatar className="h-16 w-16">

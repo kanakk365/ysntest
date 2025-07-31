@@ -29,16 +29,16 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading...</div>
       </div>
     )
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Redirecting to login...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Redirecting to login...</div>
       </div>
     )
   }
@@ -46,15 +46,15 @@ export default function Home() {
   // Only show super admin dashboard
   if (user?.user_type !== 1) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Access denied. Redirecting...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Access denied. Redirecting...</div>
       </div>
     )
   }
 
   return (
     <DashboardProvider>
-      <div className="h-screen">
+      <div className="h-screen bg-background">
         <SidebarProvider
           className="flex h-full"
           style={

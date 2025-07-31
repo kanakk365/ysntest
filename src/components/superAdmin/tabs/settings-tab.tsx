@@ -101,7 +101,7 @@ export function SettingsTab() {
 
   return (
     <div className="space-y-6 h-full bg-card">
-      <Card className="h-full flex flex-col rounded-none max-w-6xl m-auto border-none">
+      <Card className="h-full flex flex-col rounded-none max-w-6xl m-auto border-none shadow-none">
         <CardHeader>
           <CardTitle>Super Admin Settings</CardTitle>
           <CardDescription>
