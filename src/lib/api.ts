@@ -411,12 +411,8 @@ export const api = {
     },
 
     async delete(hashId: string): Promise<ApiResponse> {
-      const formData = new FormData()
-      formData.append('deletedId', hashId)
-      
-      const response = await api.fetch(`${BASE_URL}/opponent-team/delete`, {
-        method: 'DELETE',
-        body: formData
+      const response = await api.delete(`${BASE_URL}/opponent-team/delete`, {
+        body: JSON.stringify({ deletedId: hashId })
       })
       return response.json()
     },
@@ -455,7 +451,9 @@ export const api = {
     },
 
     async deleteEvent(data: EventDeleteRequest): Promise<ApiResponse> {
-      const response = await api.delete(`${BASE_URL}/event/delete`, { body: JSON.stringify(data) })
+      const response = await api.delete(`${BASE_URL}/event/delete`, {
+        body: JSON.stringify(data)
+      })
       return response.json()
     },
 
@@ -496,12 +494,8 @@ export const api = {
     },
 
     async delete(hashId: string): Promise<ApiResponse> {
-      const formData = new FormData()
-      formData.append('deletedId', hashId)
-      
-      const response = await api.fetch(`${BASE_URL}/coach/delete`, {
-        method: 'DELETE',
-        body: formData
+      const response = await api.delete(`${BASE_URL}/coach/delete`, {
+        body: JSON.stringify({ deletedId: hashId })
       })
       return response.json()
     },

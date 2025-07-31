@@ -196,3 +196,249 @@
     background: var(--background);
   }
 }
+
+/* FullCalendar Theme using CSS Variables from globals.css */
+.custom-dark-calendar {
+  --fc-border-color: var(--border);
+  --fc-button-text-color: var(--foreground);
+  --fc-button-bg-color: var(--secondary);
+  --fc-button-border-color: var(--border);
+  --fc-button-hover-bg-color: var(--accent);
+  --fc-button-hover-border-color: var(--border);
+  --fc-button-active-bg-color: var(--primary);
+  --fc-button-active-border-color: var(--primary);
+  --fc-event-bg-color: var(--primary);
+  --fc-event-border-color: var(--primary);
+  --fc-event-text-color: var(--primary-foreground);
+  --fc-today-bg-color: hsl(var(--primary) / 0.1);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-neutral-text-color: var(--muted-foreground);
+  --fc-daygrid-event-dot-width: 8px;
+  --fc-daygrid-event-dot-height: 8px;
+}
+
+.custom-dark-calendar .fc {
+  background-color: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+  font-family: var(--font-sans);
+}
+
+.custom-dark-calendar .fc-header-toolbar {
+  background-color: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: var(--radius);
+}
+
+.custom-dark-calendar .fc-daygrid-day {
+  background-color: var(--background);
+  border-color: var(--border);
+}
+
+.custom-dark-calendar .fc-daygrid-day:hover {
+  background-color: var(--accent);
+}
+
+.custom-dark-calendar .fc-daygrid-day.fc-day-today {
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+.custom-dark-calendar .fc-daygrid-day-number {
+  color: var(--foreground);
+}
+
+.custom-dark-calendar .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+}
+
+.custom-dark-calendar .fc-col-header-cell {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.custom-dark-calendar .fc-event {
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.custom-dark-calendar .fc-event.green {
+  background-color: hsl(142 76% 36%);
+  border-color: hsl(142 76% 36%);
+}
+
+.custom-dark-calendar .fc-event.blue {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.custom-dark-calendar .fc-event.orange {
+  background-color: hsl(38 92% 50%);
+  border-color: hsl(38 92% 50%);
+}
+
+.custom-dark-calendar .fc-event.yellow {
+  background-color: hsl(48 96% 53%);
+  border-color: hsl(48 96% 53%);
+}
+
+.custom-dark-calendar .fc-event.red {
+  background-color: var(--destructive);
+  border-color: var(--destructive);
+}
+
+.custom-dark-calendar .fc-more-link {
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.custom-dark-calendar .fc-more-link:hover {
+  color: hsl(var(--primary) / 0.8);
+}
+
+.custom-dark-calendar .fc-popover {
+  background-color: var(--popover);
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius);
+}
+
+.custom-dark-calendar .fc-popover-header {
+  background-color: var(--accent);
+  border-bottom-color: var(--border);
+  color: var(--accent-foreground);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.custom-dark-calendar .fc-popover-close {
+  color: var(--muted-foreground);
+}
+
+.custom-dark-calendar .fc-popover-close:hover {
+  color: var(--foreground);
+}
+
+.custom-dark-calendar .fc-list {
+  background-color: var(--background);
+  border-color: var(--border);
+}
+
+.custom-dark-calendar .fc-list-day {
+  background-color: var(--card);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.custom-dark-calendar .fc-list-event {
+  border-color: var(--border);
+}
+
+.custom-dark-calendar .fc-list-event:hover {
+  background-color: var(--accent);
+}
+
+.custom-dark-calendar .fc-list-event-dot {
+  border-color: var(--primary);
+}
+
+.custom-dark-calendar .fc-timegrid-slot {
+  border-color: var(--border);
+}
+
+.custom-dark-calendar .fc-timegrid-slot-label {
+  color: var(--muted-foreground);
+}
+
+.custom-dark-calendar .fc-timegrid-axis {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+/* Week view specific styling */
+.custom-dark-calendar .fc-timegrid-slot {
+  border-color: var(--border);
+  background-color: var(--background);
+}
+
+.custom-dark-calendar .fc-timegrid-slot-label {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.custom-dark-calendar .fc-timegrid-col {
+  border-color: var(--border);
+}
+
+.custom-dark-calendar .fc-timegrid-col-header {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.custom-dark-calendar .fc-timegrid-event {
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  margin: 1px 2px;
+}
+
+.custom-dark-calendar .fc-timegrid-now-indicator-line {
+  border-color: var(--destructive);
+}
+
+.custom-dark-calendar .fc-timegrid-now-indicator-arrow {
+  border-color: var(--destructive);
+  background-color: var(--destructive);
+}
+
+/* Additional styling for better integration */
+.custom-dark-calendar .fc-toolbar-title {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.custom-dark-calendar .fc-button {
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.custom-dark-calendar .fc-button:focus {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.custom-dark-calendar .fc-daygrid-event {
+  margin: 1px 0;
+}
+
+.custom-dark-calendar .fc-daygrid-day-events {
+  margin-top: 2px;
+}
+
+/* View toggle buttons styling */
+.custom-dark-calendar .view-toggle-button {
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.custom-dark-calendar .view-toggle-button:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.custom-dark-calendar .view-toggle-button.active {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}

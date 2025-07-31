@@ -1,27 +1,37 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useAuthStore } from "@/lib/auth-store"
-import { useCoachStore } from "@/lib/coach-store"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Textarea } from "@/components/ui/textarea"
-import { Camera, Save, User, Mail, Phone, GraduationCap, MapPin, ArrowLeft, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/lib/auth-store";
+import { useCoachStore } from "@/lib/coach-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Camera,
+  Save,
+  User,
+  Mail,
+  Phone,
+  GraduationCap,
+  MapPin,
+  ArrowLeft,
+  Loader2,
+} from "lucide-react";
 
 export function CoachProfileTab() {
-  const { user } = useAuthStore()
-  const { 
-    setActiveTab, 
-    profile, 
-    profileLoading, 
-    profileError, 
-    fetchProfile, 
-    clearProfileError 
-  } = useCoachStore()
-  
+  const { user } = useAuthStore();
+  const {
+    setActiveTab,
+    profile,
+    profileLoading,
+    profileError,
+    fetchProfile,
+    clearProfileError,
+  } = useCoachStore();
+
   const [localProfile, setLocalProfile] = useState({
     name: "",
     email: "",
@@ -32,15 +42,19 @@ export function CoachProfileTab() {
     bio: "",
     location: "",
     experience: "",
-    certifications: ["NFHS Certified Coach", "First Aid & CPR", "Concussion Protocol"]
-  })
+    certifications: [
+      "NFHS Certified Coach",
+      "First Aid & CPR",
+      "Concussion Protocol",
+    ],
+  });
 
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch profile data on component mount
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    fetchProfile();
+  }, [fetchProfile]);
 
   // Update local profile when API data is loaded
   useEffect(() => {
@@ -55,19 +69,23 @@ export function CoachProfileTab() {
         bio: "Experienced football coach with over 10 years of experience in high school athletics. Specialized in quarterback development and team strategy.",
         location: profile.coach_high_school_address || "",
         experience: "10+ years",
-        certifications: ["NFHS Certified Coach", "First Aid & CPR", "Concussion Protocol"]
-      })
+        certifications: [
+          "NFHS Certified Coach",
+          "First Aid & CPR",
+          "Concussion Protocol",
+        ],
+      });
     }
-  }, [profile])
+  }, [profile]);
 
   const handleSave = () => {
     // Here you would typically save to backend
-    setIsEditing(false)
-  }
+    setIsEditing(false);
+  };
 
   const handleBackToPlayers = () => {
-    setActiveTab("players")
-  }
+    setActiveTab("players");
+  };
 
   // Show loading state
   if (profileLoading) {
@@ -76,7 +94,7 @@ export function CoachProfileTab() {
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">Loading profile...</span>
       </div>
-    )
+    );
   }
 
   // Show error state
@@ -84,33 +102,38 @@ export function CoachProfileTab() {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <p className="text-red-500">{profileError}</p>
-        <Button onClick={() => { clearProfileError(); fetchProfile(); }}>
+        <Button
+          onClick={() => {
+            clearProfileError();
+            fetchProfile();
+          }}
+        >
           Try Again
         </Button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      <Button
+        className="mb-8"
+        variant="outline"
+        size="sm"
+        onClick={handleBackToPlayers}
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBackToPlayers}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Players
-          </Button>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Profile</h1>
-            <p className="text-muted-foreground">Manage your personal information</p>
+            <p className="text-muted-foreground">
+              Manage your personal information
+            </p>
           </div>
         </div>
-        <Button 
-          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-        >
+        <Button onClick={() => (isEditing ? handleSave() : setIsEditing(true))}>
           <Save className="h-4 w-4 mr-2" />
           {isEditing ? "Save Changes" : "Edit Profile"}
         </Button>
@@ -120,14 +143,19 @@ export function CoachProfileTab() {
         {/* Profile Photo Section */}
         <Card className="bg-card border-border md:col-span-1">
           <CardHeader>
-            <CardTitle className="text-card-foreground">Profile Photo</CardTitle>
+            <CardTitle className="text-card-foreground">
+              Profile Photo
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-4">
             <div className="relative">
               <Avatar className="h-32 w-32">
                 <AvatarImage src={localProfile.photo} alt={localProfile.name} />
                 <AvatarFallback className="text-2xl">
-                  {localProfile.name.split(' ').map(n => n[0]).join('')}
+                  {localProfile.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
                 </AvatarFallback>
               </Avatar>
               {isEditing && (
@@ -149,7 +177,9 @@ export function CoachProfileTab() {
         {/* Personal Information */}
         <Card className="bg-card border-border md:col-span-2">
           <CardHeader>
-            <CardTitle className="text-card-foreground">Personal Information</CardTitle>
+            <CardTitle className="text-card-foreground">
+              Personal Information
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -159,13 +189,15 @@ export function CoachProfileTab() {
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={localProfile.name}
-                    onChange={(e) => setLocalProfile({...localProfile, name: e.target.value})}
+                    onChange={(e) =>
+                      setLocalProfile({ ...localProfile, name: e.target.value })
+                    }
                     disabled={!isEditing}
                     className="pl-10"
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Email</Label>
                 <div className="relative">
@@ -173,7 +205,12 @@ export function CoachProfileTab() {
                   <Input
                     type="email"
                     value={localProfile.email}
-                    onChange={(e) => setLocalProfile({...localProfile, email: e.target.value})}
+                    onChange={(e) =>
+                      setLocalProfile({
+                        ...localProfile,
+                        email: e.target.value,
+                      })
+                    }
                     disabled={!isEditing}
                     className="pl-10"
                   />
@@ -187,7 +224,12 @@ export function CoachProfileTab() {
                   <Input
                     type="tel"
                     value={localProfile.mobile}
-                    onChange={(e) => setLocalProfile({...localProfile, mobile: e.target.value})}
+                    onChange={(e) =>
+                      setLocalProfile({
+                        ...localProfile,
+                        mobile: e.target.value,
+                      })
+                    }
                     disabled={!isEditing}
                     className="pl-10"
                   />
@@ -200,7 +242,12 @@ export function CoachProfileTab() {
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={localProfile.location}
-                    onChange={(e) => setLocalProfile({...localProfile, location: e.target.value})}
+                    onChange={(e) =>
+                      setLocalProfile({
+                        ...localProfile,
+                        location: e.target.value,
+                      })
+                    }
                     disabled={!isEditing}
                     className="pl-10"
                   />
@@ -212,7 +259,9 @@ export function CoachProfileTab() {
               <Label>Bio</Label>
               <Textarea
                 value={localProfile.bio}
-                onChange={(e) => setLocalProfile({...localProfile, bio: e.target.value})}
+                onChange={(e) =>
+                  setLocalProfile({ ...localProfile, bio: e.target.value })
+                }
                 disabled={!isEditing}
                 rows={3}
               />
@@ -234,16 +283,26 @@ export function CoachProfileTab() {
                 <Label>University/College</Label>
                 <Input
                   value={localProfile.university}
-                  onChange={(e) => setLocalProfile({...localProfile, university: e.target.value})}
+                  onChange={(e) =>
+                    setLocalProfile({
+                      ...localProfile,
+                      university: e.target.value,
+                    })
+                  }
                   disabled={!isEditing}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Years of Experience</Label>
                 <Input
                   value={localProfile.experience}
-                  onChange={(e) => setLocalProfile({...localProfile, experience: e.target.value})}
+                  onChange={(e) =>
+                    setLocalProfile({
+                      ...localProfile,
+                      experience: e.target.value,
+                    })
+                  }
                   disabled={!isEditing}
                 />
               </div>
@@ -252,12 +311,14 @@ export function CoachProfileTab() {
             <div className="space-y-2">
               <Label>Certifications</Label>
               <div className="space-y-2">
-                {localProfile.certifications.map((cert: string, index: number) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span className="text-muted-foreground">{cert}</span>
-                  </div>
-                ))}
+                {localProfile.certifications.map(
+                  (cert: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                      <span className="text-muted-foreground">{cert}</span>
+                    </div>
+                  )
+                )}
               </div>
             </div>
           </CardContent>
@@ -266,7 +327,9 @@ export function CoachProfileTab() {
         {/* Change Password */}
         <Card className="bg-card border-border md:col-span-1">
           <CardHeader>
-            <CardTitle className="text-card-foreground">Change Password</CardTitle>
+            <CardTitle className="text-card-foreground">
+              Change Password
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -280,7 +343,9 @@ export function CoachProfileTab() {
             <Button className="w-full">Update Password</Button>
           </CardContent>
         </Card>
+
+
       </div>
     </div>
-  )
+  );
 }

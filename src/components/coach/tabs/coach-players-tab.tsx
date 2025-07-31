@@ -40,6 +40,7 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import { FullScreenCalendar } from "@/components/coach/dashboard/full-screen-calendar";
+import { MyCalender } from "@/components/coach/dashboard/MyCalender";
 import { Event as ApiEvent } from "@/lib/api";
 
 interface Player {
@@ -95,6 +96,19 @@ export function CoachesTab() {
 
   const { events, loading: eventsLoading, error: eventsError, fetchEvents, createUpdateEvent, deleteEvent } = useEventsStore();
 
+  // Calendar state for MyCalender component
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    start: "",
+    end: "",
+    description: "",
+    location: "",
+    className: "blue"
+  });
+
   // Fetch players and events on component mount
   useEffect(() => {
     fetchPlayers();
@@ -136,56 +150,41 @@ export function CoachesTab() {
     setActiveTab("search");
   };
 
-  // Transform API events to calendar format
-  useEffect(() => {
-    if (events.length > 0) {
-      const calendarData: CalendarData[] = [];
-      
-      events.forEach((apiEvent: ApiEvent) => {
-        try {
-          // Create a proper datetime string
-          const dateTimeString = `${apiEvent.event_start_date}T${apiEvent.event_start_time}`;
-          const eventDate = new Date(dateTimeString);
-          
-          // Validate the date
-          if (isNaN(eventDate.getTime())) {
-            console.warn('Invalid date for event:', apiEvent.event_id, dateTimeString);
-            return;
-          }
-          
-          const eventTime = eventDate.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          });
-          
-          const calendarEvent: CalendarEvent = {
-            id: apiEvent.event_id,
-            name: apiEvent.event_name,
-            time: eventTime,
-            datetime: dateTimeString
-          };
-
-          const existingDay = calendarData.find(d => d.day.toDateString() === eventDate.toDateString());
-          
-          if (existingDay) {
-            existingDay.events.push(calendarEvent);
-          } else {
-            calendarData.push({
-              day: eventDate,
-              events: [calendarEvent]
-            });
-          }
-        } catch (error) {
-          console.error('Error processing event:', apiEvent.event_id, error);
+  // Transform API events to MyCalender format
+  const transformEventsForCalendar = () => {
+    return events.map((apiEvent: ApiEvent) => {
+      try {
+        // Create start datetime string
+        const startDateTime = `${apiEvent.event_start_date}T${apiEvent.event_start_time}`;
+        const endDateTime = `${apiEvent.event_end_date}T${apiEvent.event_end_time}`;
+        
+        // Determine color class based on event type or use default
+        let className = "blue";
+        if (apiEvent.event_type_name) {
+          const typeName = apiEvent.event_type_name.toLowerCase();
+          if (typeName.includes('game') || typeName.includes('match')) className = "red";
+          else if (typeName.includes('practice') || typeName.includes('training')) className = "blue";
+          else if (typeName.includes('meeting')) className = "green";
+          else if (typeName.includes('workshop')) className = "orange";
         }
-      });
-      
-      setCalendarData(calendarData);
-    } else {
-      setCalendarData([]);
-    }
-  }, [events]);
+
+        return {
+          id: apiEvent.event_id,
+          title: apiEvent.event_name,
+          start: startDateTime,
+          end: endDateTime,
+          description: apiEvent.event_desc || "",
+          location: apiEvent.event_location || "",
+          className: className,
+          // Store original API event for reference
+          originalEvent: apiEvent
+        };
+      } catch (error) {
+        console.error('Error transforming event:', apiEvent.event_id, error);
+        return null;
+      }
+    }).filter((event): event is NonNullable<typeof event> => event !== null); // Remove any null events
+  };
 
   const handleAddEvent = async (event: Omit<CalendarEvent, "id">) => {
     // Parse the datetime string more safely
@@ -269,92 +268,7 @@ export function CoachesTab() {
     await createUpdateEvent(apiEventData);
   };
 
-  const handleEditEvent = async (event: CalendarEvent) => {
-    // Parse the datetime string more safely
-    let eventDate: Date;
-    try {
-      // Clean up the datetime string to handle potential format issues
-      let cleanDateTime = event.datetime;
-      
-      // Remove any extra colons in the time part
-      if (cleanDateTime.includes('::')) {
-        cleanDateTime = cleanDateTime.replace('::', ':');
-      }
-      
-      // Handle both formats: YYYY-MM-DDTHH:MM:SS.000Z and YYYY-MM-DDTHH:MM.000Z
-      const dateTimeMatch = cleanDateTime.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::(\d{2}))?\.000Z$/);
-      if (dateTimeMatch) {
-        const [, date, time, seconds] = dateTimeMatch;
-        // If seconds are missing, add :00
-        cleanDateTime = `${date}T${time}:${seconds || '00'}.000Z`;
-      }
-      
-      eventDate = new Date(cleanDateTime);
-      if (isNaN(eventDate.getTime())) {
-        throw new Error('Invalid date after cleanup');
-      }
-    } catch (error) {
-      console.error('Error parsing date:', event.datetime, error);
-      return;
-    }
-    
-    // Find the original API event to get the hash_id
-    const originalEvent = events.find(e => e.event_id === event.id);
-    if (!originalEvent) return;
-    
-    // Format date and time safely
-    const year = eventDate.getFullYear();
-    const month = String(eventDate.getMonth() + 1).padStart(2, '0');
-    const day = String(eventDate.getDate()).padStart(2, '0');
-    const hours = String(eventDate.getHours()).padStart(2, '0');
-    const minutes = String(eventDate.getMinutes()).padStart(2, '0');
-    const seconds = String(eventDate.getSeconds()).padStart(2, '0');
-    
-    const formattedDate = `${year}-${month}-${day}`;
-    const formattedTime = `${hours}:${minutes}:${seconds}`;
-    
-         // Format end date and time if provided, otherwise use start date/time
-     let endFormattedDate = formattedDate;
-     let endFormattedTime = formattedTime;
-     
-     if (event.endDate && event.endTime) {
-       try {
-         const endDateTime = new Date(`${event.endDate}T${event.endTime}`);
-         if (!isNaN(endDateTime.getTime())) {
-           const endYear = endDateTime.getFullYear();
-           const endMonth = String(endDateTime.getMonth() + 1).padStart(2, '0');
-           const endDay = String(endDateTime.getDate()).padStart(2, '0');
-           const endHours = String(endDateTime.getHours()).padStart(2, '0');
-           const endMinutes = String(endDateTime.getMinutes()).padStart(2, '0');
-           const endSeconds = String(endDateTime.getSeconds()).padStart(2, '0');
-           
-           endFormattedDate = `${endYear}-${endMonth}-${endDay}`;
-           endFormattedTime = `${endHours}:${endMinutes}:${endSeconds}`;
-         }
-       } catch (error) {
-         console.error('Error parsing end date/time:', error);
-       }
-     }
-     
-     // Update API event data
-     const apiEventData = {
-       event_id: event.id,
-       event_name: event.name,
-       event_enty_id: originalEvent.event_enty_id,
-       event_start_date: formattedDate,
-       event_start_time: formattedTime,
-       event_end_date: endFormattedDate,
-       event_end_time: endFormattedTime,
-       event_is_recur: event.isRecur ? 1 : 0,
-       event_is_allday: event.isAllDay ? 1 : 0,
-       event_url: event.eventUrl || originalEvent.event_url,
-       event_location: event.location || originalEvent.event_location,
-       event_desc: event.description || originalEvent.event_desc,
-       event_status: originalEvent.event_status
-     };
-
-    await createUpdateEvent(apiEventData);
-  };
+  
 
   const handleDeleteEvent = async (eventId: number) => {
     if (confirm('Are you sure you want to delete this event?')) {
@@ -384,6 +298,178 @@ export function CoachesTab() {
   const goToLastPage = () => goToPage(totalPages);
   const goToPreviousPage = () => goToPage(currentPage - 1);
   const goToNextPage = () => goToPage(currentPage + 1);
+
+  // Calendar event handlers for MyCalender
+  const handleEventClick = (eventInfo: { event: any }) => {
+    console.log('Event clicked:', eventInfo.event);
+    console.log('Event ID:', eventInfo.event.id);
+    
+    // Find the transformed event that contains the originalEvent property
+    const transformedEvents = transformEventsForCalendar();
+    console.log('Transformed events:', transformedEvents);
+    
+    const transformedEvent = transformedEvents.find(e => e.id === eventInfo.event.id);
+    console.log('Found transformed event:', transformedEvent);
+    
+    if (transformedEvent) {
+      setSelectedEvent(transformedEvent);
+      setModalOpen(true);
+    } else {
+      console.error('Transformed event not found for:', eventInfo.event.id);
+      // Fallback: try to find by title or other properties
+      const fallbackEvent = transformedEvents.find(e => 
+        e.title === eventInfo.event.title || 
+        e.id.toString() === eventInfo.event.id.toString()
+      );
+      if (fallbackEvent) {
+        console.log('Found event by fallback:', fallbackEvent);
+        setSelectedEvent(fallbackEvent);
+        setModalOpen(true);
+      } else {
+        console.error('No fallback event found either');
+      }
+    }
+  };
+
+  const handleDelete = async (eventId: string | number) => {
+    try {
+      // Find the transformed event that contains the originalEvent property
+      const transformedEvents = transformEventsForCalendar();
+      const transformedEvent = transformedEvents.find(e => e.id === eventId);
+      
+      if (!transformedEvent || !transformedEvent.originalEvent) {
+        console.error('Event not found for deletion:', eventId);
+        return;
+      }
+      
+      await deleteEvent({ deletedId: transformedEvent.originalEvent.hash_id });
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
+  };
+
+  const handleOpenModal = () => {
+    // This would typically open an edit modal
+    console.log("Edit event:", selectedEvent);
+  };
+
+  // Add edit event handler
+  const handleEditEvent = async (eventData: any) => {
+    try {
+      // Check if we have the originalEvent property (from calendar click) or updated data (from modal edit)
+      const originalEvent = eventData.originalEvent;
+      
+      if (!originalEvent) {
+        console.error('Original event data not found for editing:', eventData.id);
+        return;
+      }
+
+      // Parse the datetime strings
+      const startDate = new Date(eventData.start);
+      const endDate = new Date(eventData.end);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        alert('Please enter valid dates');
+        return;
+      }
+
+      // Format dates for API
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const formatTime = (date: Date) => {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+      };
+
+      const apiEventData = {
+        event_id: eventData.id,
+        event_name: eventData.title,
+        event_enty_id: originalEvent.event_enty_id,
+        event_start_date: formatDate(startDate),
+        event_start_time: formatTime(startDate),
+        event_end_date: formatDate(endDate),
+        event_end_time: formatTime(endDate),
+        event_is_recur: originalEvent.event_is_recur,
+        event_is_allday: originalEvent.event_is_allday,
+        event_url: originalEvent.event_url,
+        event_location: eventData.location || originalEvent.event_location,
+        event_desc: eventData.description || originalEvent.event_desc,
+        event_status: originalEvent.event_status
+      };
+
+      await createUpdateEvent(apiEventData);
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error editing event:', error);
+    }
+  };
+
+  // Add new event handler
+  const handleAddNewEvent = async () => {
+    try {
+      // Parse the datetime strings
+      const startDate = new Date(newEvent.start);
+      const endDate = new Date(newEvent.end);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        alert('Please enter valid dates');
+        return;
+      }
+
+      // Format dates for API
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const formatTime = (date: Date) => {
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+      };
+
+      const apiEventData = {
+        event_name: newEvent.title,
+        event_enty_id: 1, // Default event type ID
+        event_start_date: formatDate(startDate),
+        event_start_time: formatTime(startDate),
+        event_end_date: formatDate(endDate),
+        event_end_time: formatTime(endDate),
+        event_is_recur: 0,
+        event_is_allday: 0,
+        event_url: "",
+        event_location: newEvent.location,
+        event_desc: newEvent.description,
+        event_status: 1
+      };
+
+      await createUpdateEvent(apiEventData);
+      
+      // Reset form
+      setNewEvent({
+        title: "",
+        start: "",
+        end: "",
+        description: "",
+        location: "",
+        className: "blue"
+      });
+      setShowAddEventModal(false);
+    } catch (error) {
+      console.error('Error adding event:', error);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -686,33 +772,132 @@ export function CoachesTab() {
         </div>
 
         {/* Calendar Section */}
-        <Card className="bg-card border-border h-screen">
-          <CardContent className="h-full">
-            {eventsLoading && calendarData.length === 0 ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-2">Loading events...</span>
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-card-foreground flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                My Schedule
+              </CardTitle>
+              <Button 
+                onClick={() => setShowAddEventModal(true)}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Add Event
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-muted-foreground">Loading events...</div>
               </div>
             ) : eventsError ? (
-              <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                <p className="text-red-500">{eventsError}</p>
-                <button 
-                  onClick={() => fetchEvents()}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
-                >
-                  Try Again
-                </button>
+              <div className="flex items-center justify-center py-8">
+                <div className="text-red-500">
+                  Error: {eventsError}
+                  <Button 
+                    onClick={fetchEvents} 
+                    variant="outline" 
+                    className="ml-4"
+                  >
+                    Retry
+                  </Button>
+                </div>
               </div>
             ) : (
-              <FullScreenCalendar
-                data={calendarData}
-                onAddEvent={handleAddEvent}
-                onEditEvent={handleEditEvent}
-                onDeleteEvent={handleDeleteEvent}
-              />
+                             <MyCalender
+                 events={transformEventsForCalendar()}
+                 modalOpen={modalOpen}
+                 setModalOpen={setModalOpen}
+                 handleEventClick={handleEventClick}
+                 selectedEvent={selectedEvent}
+                 handleDelete={handleDelete}
+                 handleEdit={handleEditEvent}
+                 handleOpenModal={handleOpenModal}
+               />
             )}
           </CardContent>
         </Card>
+
+        {/* Add Event Modal */}
+        <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Event</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Event Title</Label>
+                <Input
+                  id="title"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                  placeholder="Enter event title"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="start">Start Date & Time</Label>
+                <Input
+                  id="start"
+                  type="datetime-local"
+                  value={newEvent.start}
+                  onChange={(e) => setNewEvent({...newEvent, start: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end">End Date & Time</Label>
+                <Input
+                  id="end"
+                  type="datetime-local"
+                  value={newEvent.end}
+                  onChange={(e) => setNewEvent({...newEvent, end: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={newEvent.location}
+                  onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                  placeholder="Enter location"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                  placeholder="Enter event description"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="className">Event Type</Label>
+                <select
+                  id="className"
+                  value={newEvent.className}
+                  onChange={(e) => setNewEvent({...newEvent, className: e.target.value})}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="blue">Practice/Training</option>
+                  <option value="green">Meeting</option>
+                  <option value="red">Game/Match</option>
+                  <option value="orange">Workshop</option>
+                  <option value="yellow">Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowAddEventModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddNewEvent} disabled={!newEvent.title || !newEvent.start || !newEvent.end}>
+                Add Event
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
