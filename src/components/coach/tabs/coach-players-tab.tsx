@@ -42,6 +42,7 @@ import {
 import { FullScreenCalendar } from "@/components/coach/dashboard/full-screen-calendar";
 import { MyCalender } from "@/components/coach/dashboard/MyCalender";
 import { Event as ApiEvent } from "@/lib/api";
+import type { EventClickArg } from "@fullcalendar/core";
 
 interface Player {
   id: string;
@@ -168,8 +169,11 @@ export function CoachesTab() {
           else if (typeName.includes('workshop')) className = "orange";
         }
 
+        // Ensure consistent ID type - convert to string to avoid type mismatches
+        const eventId = String(apiEvent.event_id);
+
         return {
-          id: apiEvent.event_id,
+          id: eventId,
           title: apiEvent.event_name,
           start: startDateTime,
           end: endDateTime,
@@ -300,45 +304,70 @@ export function CoachesTab() {
   const goToNextPage = () => goToPage(currentPage + 1);
 
   // Calendar event handlers for MyCalender
-  const handleEventClick = (eventInfo: { event: any }) => {
-    console.log('Event clicked:', eventInfo.event);
-    console.log('Event ID:', eventInfo.event.id);
+  const handleEventClick = (eventInfo: EventClickArg) => {
+    console.log('=== Event Click Debug ===');
+    console.log('Clicked event:', eventInfo.event);
+    console.log('Clicked event ID:', eventInfo.event.id);
+    console.log('Clicked event ID type:', typeof eventInfo.event.id);
+    console.log('Clicked event title:', eventInfo.event.title);
+    console.log('Clicked event extendedProps:', eventInfo.event.extendedProps);
     
     // Find the transformed event that contains the originalEvent property
     const transformedEvents = transformEventsForCalendar();
-    console.log('Transformed events:', transformedEvents);
+    console.log('All transformed events:', transformedEvents);
+    console.log('Transformed event IDs:', transformedEvents.map(e => ({ id: e.id, idType: typeof e.id, title: e.title })));
     
-    const transformedEvent = transformedEvents.find(e => e.id === eventInfo.event.id);
-    console.log('Found transformed event:', transformedEvent);
+    // Convert clicked event ID to string for consistent comparison
+    const clickedEventId = String(eventInfo.event.id);
+    console.log('Looking for event with ID:', clickedEventId);
+    
+    // Try to find the event by ID
+    let transformedEvent = transformedEvents.find(e => String(e.id) === clickedEventId);
+    console.log('Found by ID match:', transformedEvent);
+    
+    // If still not found, try by title
+    if (!transformedEvent) {
+      transformedEvent = transformedEvents.find(e => 
+        e.title === eventInfo.event.title
+      );
+      console.log('Found by title match:', transformedEvent);
+    }
+    
+    // If still not found, try by extendedProps
+    if (!transformedEvent && eventInfo.event.extendedProps) {
+      transformedEvent = transformedEvents.find(e => 
+        e.id === eventInfo.event.extendedProps.id ||
+        String(e.id) === String(eventInfo.event.extendedProps.id)
+      );
+      console.log('Found by extendedProps match:', transformedEvent);
+    }
+    
+    console.log('Final transformed event:', transformedEvent);
     
     if (transformedEvent) {
       setSelectedEvent(transformedEvent);
       setModalOpen(true);
     } else {
-      console.error('Transformed event not found for:', eventInfo.event.id);
-      // Fallback: try to find by title or other properties
-      const fallbackEvent = transformedEvents.find(e => 
-        e.title === eventInfo.event.title || 
-        e.id.toString() === eventInfo.event.id.toString()
-      );
-      if (fallbackEvent) {
-        console.log('Found event by fallback:', fallbackEvent);
-        setSelectedEvent(fallbackEvent);
-        setModalOpen(true);
-      } else {
-        console.error('No fallback event found either');
-      }
+      console.error('❌ Transformed event not found for:', eventInfo.event.id);
+      console.error('Available event IDs:', transformedEvents.map(e => ({ id: e.id, title: e.title })));
     }
+    console.log('=== End Event Click Debug ===');
   };
 
   const handleDelete = async (eventId: string | number) => {
     try {
       // Find the transformed event that contains the originalEvent property
       const transformedEvents = transformEventsForCalendar();
-      const transformedEvent = transformedEvents.find(e => e.id === eventId);
+      
+      // Convert eventId to string for consistent comparison
+      const eventIdString = String(eventId);
+      
+      // Try to find the event by ID
+      const transformedEvent = transformedEvents.find(e => String(e.id) === eventIdString);
       
       if (!transformedEvent || !transformedEvent.originalEvent) {
         console.error('Event not found for deletion:', eventId);
+        console.error('Available event IDs:', transformedEvents.map(e => ({ id: e.id, title: e.title })));
         return;
       }
       

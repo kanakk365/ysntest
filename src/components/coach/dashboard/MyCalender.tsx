@@ -3,6 +3,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import type { EventClickArg } from "@fullcalendar/core";
 import ViewEventModal from "./ViewEventModal";
 
 interface Event {
@@ -21,10 +22,10 @@ interface Props {
   events: Event[];
   setModalOpen: (open: boolean) => void;
   modalOpen: boolean;
-  handleEventClick: (eventInfo: { event: Event }) => void;
+  handleEventClick: (eventInfo: EventClickArg) => void;
   selectedEvent: Event | null;
   handleDelete: (eventId: string | number) => void;
-  handleEdit: (eventData: any) => void;
+  handleEdit: (eventData: Event) => void;
   handleOpenModal: () => void;
 }
 
@@ -41,7 +42,7 @@ export const MyCalender = ({
   const [currentView, setCurrentView] = useState<
     "dayGridMonth" | "timeGridWeek"
   >("dayGridMonth");
-  const calendarRef = useRef<any>(null);
+  const calendarRef = useRef<FullCalendar>(null);
 
   const moreLinkDidMount = (args: { el: HTMLElement }) => {
     const el = args.el as HTMLElement;
@@ -158,10 +159,15 @@ export const MyCalender = ({
             plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
             initialView={currentView}
             height="auto"
-            events={events.map((e: Event) => ({
-              ...e,
-              className: getColorClass(e.className || ""),
-            }))}
+            events={events.map((e: Event) => {
+              console.log('Processing event for calendar:', e);
+              return {
+                ...e,
+                className: getColorClass(e.className || ""),
+                // Ensure the ID is preserved as a string
+                id: String(e.id),
+              };
+            })}
             editable={false}
             selectable={true}
             showNonCurrentDates={false}
