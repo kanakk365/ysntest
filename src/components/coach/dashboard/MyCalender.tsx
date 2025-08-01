@@ -129,29 +129,7 @@ export const MyCalender = ({
     <>
       <div className="h-full bg-background text-foreground rounded-lg border border-border">
         <div className="custom-dark-calendar p-4">
-          {/* View Toggle Buttons */}
-          <div className="flex justify-end mb-4 space-x-2">
-            <button
-              onClick={() => handleViewChange("dayGridMonth")}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 border ${
-                currentView === "dayGridMonth"
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-foreground border-border hover:bg-accent hover:border-accent"
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => handleViewChange("timeGridWeek")}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 border ${
-                currentView === "timeGridWeek"
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-background text-foreground border-border hover:bg-accent hover:border-accent"
-              }`}
-            >
-              Week
-            </button>
-          </div>
+         
 
           <FullCalendar
             ref={calendarRef}

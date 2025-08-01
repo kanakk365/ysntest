@@ -336,7 +336,7 @@ export function CoachProfileTab() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3 pb-10">
         {/* Profile Photo Section */}
         <Card className="bg-card border-border md:col-span-1">
           <CardHeader>

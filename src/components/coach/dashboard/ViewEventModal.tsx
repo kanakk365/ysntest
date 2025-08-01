@@ -34,6 +34,8 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
     end: '',
     description: '',
     location: '',
+    isRecur: false,
+    isAllDay: false,
   });
 
   // Initialize edit form when eventData changes
@@ -64,6 +66,8 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
         end: eventData.end ? formatDateTimeForInput(eventData.end) : '',
         description: eventData.description || '',
         location: eventData.location || '',
+        isRecur: eventData.isRecurring || false,
+        isAllDay: eventData.isAllDay || false,
       });
     }
   }, [eventData]);
@@ -101,6 +105,8 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
       end: editForm.end,
       description: editForm.description.trim(),
       location: editForm.location.trim(),
+      isRecurring: editForm.isRecur,
+      isAllDay: editForm.isAllDay,
       // Preserve the originalEvent property which is needed for the API call
       originalEvent: eventData.originalEvent,
     };
@@ -140,6 +146,8 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
         end: eventData.end ? formatDateTimeForInput(eventData.end) : '',
         description: eventData.description || '',
         location: eventData.location || '',
+        isRecur: eventData.isRecurring || false,
+        isAllDay: eventData.isAllDay || false,
       });
     }
   };
@@ -159,7 +167,7 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
           // Edit Form
           <div className="space-y-4">
             <div>
-              <Label htmlFor="edit-title">Event Title</Label>
+             
               <Input
                 id="edit-title"
                 value={editForm.title}
@@ -167,26 +175,49 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
                 placeholder="Enter event title"
               />
             </div>
-            <div>
-              <Label htmlFor="edit-start">Start Date & Time</Label>
-              <Input
-                id="edit-start"
-                type="datetime-local"
-                value={editForm.start}
-                onChange={(e) => setEditForm({...editForm, start: e.target.value})}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className='space-y-2'>
+                <Label htmlFor="edit-start" className='pl-1'>Start Date & Time</Label>
+                <Input
+                  id="edit-start"
+                  type="datetime-local"
+                  value={editForm.start}
+                  onChange={(e) => setEditForm({...editForm, start: e.target.value})}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor="edit-end" className='pl-1'>End Date & Time</Label>
+                <Input
+                  id="edit-end"
+                  type="datetime-local"
+                  value={editForm.end}
+                  onChange={(e) => setEditForm({...editForm, end: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isRecur"
+                  checked={editForm.isRecur}
+                  onChange={(e) => setEditForm({...editForm, isRecur: e.target.checked})}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="isRecur">Recurring Event</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isAllDay"
+                  checked={editForm.isAllDay}
+                  onChange={(e) => setEditForm({...editForm, isAllDay: e.target.checked})}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="isAllDay">All Day Event</Label>
+              </div>
             </div>
             <div>
-              <Label htmlFor="edit-end">End Date & Time</Label>
-              <Input
-                id="edit-end"
-                type="datetime-local"
-                value={editForm.end}
-                onChange={(e) => setEditForm({...editForm, end: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-location">Location</Label>
               <Input
                 id="edit-location"
                 value={editForm.location}
@@ -195,7 +226,6 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
               />
             </div>
             <div>
-              <Label htmlFor="edit-description">Description</Label>
               <Textarea
                 id="edit-description"
                 value={editForm.description}

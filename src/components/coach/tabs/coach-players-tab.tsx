@@ -43,6 +43,7 @@ import { FullScreenCalendar } from "@/components/coach/dashboard/full-screen-cal
 import { MyCalender } from "@/components/coach/dashboard/MyCalender";
 import { Event as ApiEvent } from "@/lib/api";
 import type { EventClickArg } from "@fullcalendar/core";
+import { format, startOfDay, endOfDay, eachHourOfInterval, isSameDay, add, sub } from "date-fns";
 
 interface Player {
   id: string;
@@ -107,8 +108,14 @@ export function CoachesTab() {
     end: "",
     description: "",
     location: "",
-    className: "blue"
+    className: "blue",
+    isRecur: false,
+    isAllDay: false
   });
+  
+  // Calendar view state
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Fetch players and events on component mount
   useEffect(() => {
@@ -492,7 +499,9 @@ export function CoachesTab() {
         end: "",
         description: "",
         location: "",
-        className: "blue"
+        className: "blue",
+        isRecur: false,
+        isAllDay: false
       });
       setShowAddEventModal(false);
     } catch (error) {
@@ -810,12 +819,40 @@ export function CoachesTab() {
                 <Calendar className="h-5 w-5" />
                 My Schedule
               </CardTitle>
-              <Button 
-                onClick={() => setShowAddEventModal(true)}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Add Event
-              </Button>
+                             <div className="flex items-center gap-2">
+                 <div className="flex items-center border rounded-md">
+                   <Button
+                     variant={viewMode === 'month' ? 'default' : 'ghost'}
+                     size="sm"
+                     onClick={() => setViewMode('month')}
+                     className="rounded-r-none"
+                   >
+                     Month
+                   </Button>
+                   <Button
+                     variant={viewMode === 'week' ? 'default' : 'ghost'}
+                     size="sm"
+                     onClick={() => setViewMode('week')}
+                     className="rounded-none"
+                   >
+                     Week
+                   </Button>
+                   <Button
+                     variant={viewMode === 'day' ? 'default' : 'ghost'}
+                     size="sm"
+                     onClick={() => setViewMode('day')}
+                     className="rounded-l-none"
+                   >
+                     Day
+                   </Button>
+                 </div>
+                 <Button 
+                   onClick={() => setShowAddEventModal(true)}
+                   className="bg-primary text-primary-foreground hover:bg-primary/90"
+                 >
+                   Add Event
+                 </Button>
+               </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -836,8 +873,34 @@ export function CoachesTab() {
                   </Button>
                 </div>
               </div>
-            ) : (
-                             <MyCalender
+                         ) : viewMode === 'day' ? (
+               <DayView 
+                 events={transformEventsForCalendar()}
+                 selectedDate={selectedDate}
+                 onDateChange={setSelectedDate}
+                 onEventClick={handleEventClick}
+                 modalOpen={modalOpen}
+                 setModalOpen={setModalOpen}
+                 selectedEvent={selectedEvent}
+                 handleDelete={handleDelete}
+                 handleEdit={handleEditEvent}
+                 handleOpenModal={handleOpenModal}
+               />
+             ) : viewMode === 'week' ? (
+               <WeekView 
+                 events={transformEventsForCalendar()}
+                 selectedDate={selectedDate}
+                 onDateChange={setSelectedDate}
+                 onEventClick={handleEventClick}
+                 modalOpen={modalOpen}
+                 setModalOpen={setModalOpen}
+                 selectedEvent={selectedEvent}
+                 handleDelete={handleDelete}
+                 handleEdit={handleEditEvent}
+                 handleOpenModal={handleOpenModal}
+               />
+             ) : (
+               <MyCalender
                  events={transformEventsForCalendar()}
                  modalOpen={modalOpen}
                  setModalOpen={setModalOpen}
@@ -847,7 +910,7 @@ export function CoachesTab() {
                  handleEdit={handleEditEvent}
                  handleOpenModal={handleOpenModal}
                />
-            )}
+             )}
           </CardContent>
         </Card>
 
@@ -884,6 +947,28 @@ export function CoachesTab() {
                   value={newEvent.end}
                   onChange={(e) => setNewEvent({...newEvent, end: e.target.value})}
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isRecur"
+                    checked={newEvent.isRecur}
+                    onChange={(e) => setNewEvent({...newEvent, isRecur: e.target.checked})}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="isRecur">Recurring Event</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isAllDay"
+                    checked={newEvent.isAllDay}
+                    onChange={(e) => setNewEvent({...newEvent, isAllDay: e.target.checked})}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="isAllDay">All Day Event</Label>
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="location">Location</Label>
@@ -930,6 +1015,250 @@ export function CoachesTab() {
           </DialogContent>
         </Dialog>
 
+      </div>
+    </div>
+  );
+}
+
+// Day View Component
+interface DayViewProps {
+  events: any[];
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
+  onEventClick: (eventInfo: any) => void;
+  modalOpen: boolean;
+  setModalOpen: (open: boolean) => void;
+  selectedEvent: any;
+  handleDelete: (eventId: string | number) => void;
+  handleEdit: (eventData: any) => void;
+  handleOpenModal: () => void;
+}
+
+function DayView({
+  events,
+  selectedDate,
+  onDateChange,
+  onEventClick,
+  modalOpen,
+  setModalOpen,
+  selectedEvent,
+  handleDelete,
+  handleEdit,
+  handleOpenModal,
+}: DayViewProps) {
+  const hours = eachHourOfInterval({
+    start: startOfDay(selectedDate),
+    end: endOfDay(selectedDate),
+  });
+
+  const getEventsForHour = (hour: Date) => {
+    return events.filter(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      const hourStart = hour;
+      const hourEnd = add(hour, { hours: 1 });
+      
+      return (
+        (eventStart >= hourStart && eventStart < hourEnd) ||
+        (eventEnd > hourStart && eventEnd <= hourEnd) ||
+        (eventStart <= hourStart && eventEnd >= hourEnd)
+      );
+    });
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = direction === 'next' 
+      ? add(selectedDate, { days: 1 })
+      : sub(selectedDate, { days: 1 });
+    onDateChange(newDate);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Day Navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateDate('prev')}
+        >
+          ← Previous Day
+        </Button>
+        <h3 className="text-lg font-semibold">
+          {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+        </h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateDate('next')}
+        >
+          Next Day →
+        </Button>
+      </div>
+
+      {/* Day Timeline */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-muted px-4 py-2 border-b">
+          <h4 className="font-medium">Timeline</h4>
+        </div>
+        <div className="max-h-96 overflow-y-auto">
+          {hours.map((hour, index) => {
+            const hourEvents = getEventsForHour(hour);
+            return (
+              <div key={index} className="border-b last:border-b-0">
+                <div className="flex">
+                  <div className="w-20 bg-muted/50 px-3 py-2 text-sm font-medium border-r">
+                    {format(hour, 'h a')}
+                  </div>
+                  <div className="flex-1 min-h-12 p-2">
+                    {hourEvents.map((event, eventIndex) => (
+                      <div
+                        key={eventIndex}
+                        className="mb-2 p-2 bg-blue-100 border border-blue-200 rounded cursor-pointer hover:bg-blue-200 transition-colors"
+                        onClick={() => onEventClick({ event: { id: event.id, title: event.title } })}
+                      >
+                        <div className="font-medium text-sm">{event.title}</div>
+                        <div className="text-xs text-gray-600">
+                          {format(new Date(event.start), 'h:mm a')} - {format(new Date(event.end), 'h:mm a')}
+                        </div>
+                        {event.location && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            📍 {event.location}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Week View Component
+interface WeekViewProps {
+  events: any[];
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
+  onEventClick: (eventInfo: any) => void;
+  modalOpen: boolean;
+  setModalOpen: (open: boolean) => void;
+  selectedEvent: any;
+  handleDelete: (eventId: string | number) => void;
+  handleEdit: (eventData: any) => void;
+  handleOpenModal: () => void;
+}
+
+function WeekView({
+  events,
+  selectedDate,
+  onDateChange,
+  onEventClick,
+  modalOpen,
+  setModalOpen,
+  selectedEvent,
+  handleDelete,
+  handleEdit,
+  handleOpenModal,
+}: WeekViewProps) {
+  const startOfWeek = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  };
+
+  const endOfWeek = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? 0 : 7);
+    return new Date(d.setDate(diff));
+  };
+
+  const weekStart = startOfWeek(selectedDate);
+  const weekEnd = endOfWeek(selectedDate);
+  
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    weekDays.push(day);
+  }
+
+  const getEventsForDay = (day: Date) => {
+    return events.filter(event => {
+      const eventStart = new Date(event.start);
+      return isSameDay(eventStart, day);
+    });
+  };
+
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    const newDate = direction === 'next' 
+      ? add(selectedDate, { weeks: 1 })
+      : sub(selectedDate, { weeks: 1 });
+    onDateChange(newDate);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateWeek('prev')}
+        >
+          ← Previous Week
+        </Button>
+        <h3 className="text-lg font-semibold">
+          {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+        </h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateWeek('next')}
+        >
+          Next Week →
+        </Button>
+      </div>
+
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-muted px-4 py-2 border-b">
+          <h4 className="font-medium">Week View</h4>
+        </div>
+        <div className="grid grid-cols-7 gap-0">
+          {weekDays.map((day, index) => (
+            <div key={index} className="border-r last:border-r-0">
+              <div className="bg-muted/50 px-3 py-2 text-sm font-medium border-b">
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">
+                    {format(day, 'EEE')}
+                  </div>
+                  <div className={`text-lg ${isSameDay(day, new Date()) ? 'text-primary font-bold' : ''}`}>
+                    {format(day, 'd')}
+                  </div>
+                </div>
+              </div>
+              <div className="p-2 min-h-32">
+                {getEventsForDay(day).map((event, eventIndex) => (
+                  <div
+                    key={eventIndex}
+                    className="mb-1 p-1 bg-blue-100 border border-blue-200 rounded text-xs cursor-pointer hover:bg-blue-200 transition-colors"
+                    onClick={() => onEventClick({ event: { id: event.id, title: event.title } })}
+                  >
+                    <div className="font-medium truncate">{event.title}</div>
+                    <div className="text-gray-600">
+                      {format(new Date(event.start), 'h:mm a')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

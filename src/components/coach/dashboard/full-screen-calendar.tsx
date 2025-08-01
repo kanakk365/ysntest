@@ -249,7 +249,7 @@ export function FullScreenCalendar({ data, onAddEvent, onEditEvent, onDeleteEven
                    />
                  </div>
                  
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-4 gap-4">
                    <div>
                      <Label>Start Date *</Label>
                      <Input
@@ -266,9 +266,6 @@ export function FullScreenCalendar({ data, onAddEvent, onEditEvent, onDeleteEven
                        onChange={(e) => setFormData({...formData, startTime: e.target.value})}
                      />
                    </div>
-                 </div>
-                 
-                 <div className="grid grid-cols-2 gap-4">
                    <div>
                      <Label>End Date</Label>
                      <Input
