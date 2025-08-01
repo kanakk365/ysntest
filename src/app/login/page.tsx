@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuthStore } from "@/lib/auth-store"
-import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
@@ -11,19 +10,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [validationError, setValidationError] = useState("")
   
-  const { login, loading, error, clearError, isAuthenticated, user } = useAuthStore()
-  const router = useRouter()
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      if (user.user_type === 1) {
-        router.push("/dashboard")
-      } else if (user.user_type === 3) {
-        router.push("/dashboard/coach")
-      }
-    }
-  }, [isAuthenticated, user, router])
+  const { login, loading, error, clearError } = useAuthStore()
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -46,12 +33,8 @@ export default function LoginPage() {
 
     const success = await login(email, password)
     
-    if (success && user) {
-      if (user.user_type === 1) {
-        router.push("/dashboard")
-      } else if (user.user_type === 3) {
-        router.push("/dashboard/coach")
-      }
+    if (success) {
+      // The AuthProvider will handle the redirect based on user type
     }
   }
 

@@ -1,9 +1,6 @@
 "use client"
 
 import { useAuthStore } from "@/lib/auth-store"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-
 import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
 import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
@@ -14,43 +11,7 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function Home() {
-  const { user, isAuthenticated, loading } = useAuthStore()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push("/login")
-      } else if (user?.user_type === 3) {
-        router.push("/dashboard/coach")
-      }
-    }
-  }, [isAuthenticated, loading, user, router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Redirecting to login...</div>
-      </div>
-    )
-  }
-
-  // Only show super admin dashboard
-  if (user?.user_type !== 1) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Access denied. Redirecting...</div>
-      </div>
-    )
-  }
+  const { user } = useAuthStore()
 
   return (
     <DashboardProvider>
