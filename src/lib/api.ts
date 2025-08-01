@@ -551,4 +551,49 @@ export const api = {
       return response.json()
     },
   },
+
+  changePassword: {
+    async change(data: {
+      current_password: string
+      new_password: string
+      confirm_password: string
+    }): Promise<ApiResponse> {
+      const response = await api.post(`${BASE_URL}/change-password`, data)
+      return response.json()
+    },
+  },
+
+  // Coach Profile Update API
+  coachProfile: {
+    async update(data: FormData): Promise<ApiResponse> {
+      const { user } = useAuthStore.getState()
+      
+      const headers: Record<string, string> = {}
+      if (user?.token) {
+        headers.Authorization = `Bearer ${user.token}`
+      } else {
+        console.warn('No token found in auth store')
+      }
+
+      try {
+        const response = await api.fetch(`${BASE_URL}/coach/profile-update`, {
+          method: 'POST',
+          headers,
+          body: data, // FormData for file upload
+        })
+
+        if (!response.ok) {
+          console.error('API Error:', response.status, response.statusText)
+          const errorText = await response.text()
+          console.error('Error response:', errorText)
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        }
+
+        return response.json()
+      } catch (error) {
+        console.error('coachProfile update error:', error)
+        throw error
+      }
+    },
+  },
 } 
