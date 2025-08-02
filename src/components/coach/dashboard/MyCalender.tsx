@@ -5,16 +5,33 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { EventClickArg } from "@fullcalendar/core";
 import ViewEventModal from "./ViewEventModal";
+import { Event as ApiEvent } from "@/lib/api";
 
 interface Event {
-  id: string | number;
+  id?: string | number;
   title?: string;
   event_name?: string;
-  start: string | Date;
-  end?: string | Date;
+  start?: string;
+  end?: string;
   description?: string;
   location?: string;
   className?: string;
+  [key: string]: unknown;
+}
+
+interface CalendarEventData {
+  id?: string | number;
+  event_id?: string | number;
+  title?: string;
+  event_name?: string;
+  start?: string;
+  end?: string;
+  description?: string;
+  location?: string;
+  className?: string;
+  isRecurring?: boolean;
+  isAllDay?: boolean;
+  originalEvent?: ApiEvent;
   [key: string]: unknown;
 }
 
@@ -23,10 +40,9 @@ interface Props {
   setModalOpen: (open: boolean) => void;
   modalOpen: boolean;
   handleEventClick: (eventInfo: EventClickArg) => void;
-  selectedEvent: Event | null;
+  selectedEvent: CalendarEventData | null;
   handleDelete: (eventId: string | number) => void;
-  handleEdit: (eventData: Event) => void;
-  handleOpenModal: () => void;
+  handleEdit: (eventData: CalendarEventData) => void;
 }
 
 export const MyCalender = ({
@@ -37,7 +53,6 @@ export const MyCalender = ({
   selectedEvent,
   handleDelete,
   handleEdit,
-  handleOpenModal,
 }: Props) => {
   const [currentView, setCurrentView] = useState<
     "dayGridMonth" | "timeGridWeek"
@@ -117,13 +132,7 @@ export const MyCalender = ({
     }
   };
 
-  const handleViewChange = (view: "dayGridMonth" | "timeGridWeek") => {
-    setCurrentView(view);
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi();
-      calendarApi.changeView(view);
-    }
-  };
+
 
   return (
     <>
@@ -162,14 +171,15 @@ export const MyCalender = ({
             allDaySlot={true}
             slotDuration="00:30:00"
           />
-          <ViewEventModal
-            open={modalOpen}
-            onClose={() => setModalOpen(false)}
-            eventData={selectedEvent}
-            handleDelete={handleDelete}
-            handleEdit={handleEdit}
-            handleOpenModal={handleOpenModal}
-          />
+          {selectedEvent && (
+            <ViewEventModal
+              open={modalOpen}
+              onClose={() => setModalOpen(false)}
+              eventData={selectedEvent}
+              handleDelete={handleDelete}
+              handleEdit={handleEdit}
+            />
+          )}
         </div>
       </div>
     </>

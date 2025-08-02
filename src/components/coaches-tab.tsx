@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react"
-import { useCoachStore } from "@/lib/coach-store"
+import { useCoachStore, type Player } from "@/lib/coach-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,7 +31,7 @@ import {
 
 export function CoachesTab() {
   const { players, updatePlayerRating, addPlayerNote, addPlayerLabel } = useCoachStore()
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null)
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [newNote, setNewNote] = useState("")
   const [newLabel, setNewLabel] = useState("")
   const [showNoteDialog, setShowNoteDialog] = useState(false)

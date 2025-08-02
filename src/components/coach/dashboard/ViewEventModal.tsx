@@ -9,14 +9,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Event as ApiEvent } from '@/lib/api';
+
+interface EventData {
+  id?: string | number;
+  event_id?: string | number;
+  title?: string;
+  event_name?: string;
+  start?: string;
+  end?: string;
+  description?: string;
+  location?: string;
+  isRecurring?: boolean;
+  isAllDay?: boolean;
+  originalEvent?: ApiEvent;
+  [key: string]: unknown;
+}
 
 interface ViewEventModalProps {
   open: boolean;
   onClose: () => void;
-  eventData: any;
+  eventData: EventData;
   handleDelete: (eventId: string | number) => void;
-  handleEdit: (eventData: any) => void;
-  handleOpenModal: () => void;
+  handleEdit: (eventData: EventData) => void;
 }
 
 const ViewEventModal: React.FC<ViewEventModalProps> = ({
@@ -25,7 +40,6 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
   eventData,
   handleDelete,
   handleEdit,
-  handleOpenModal,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -288,8 +302,11 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
               <Button
                 variant="destructive"
                 onClick={() => {
-                  handleDelete(eventData.id || eventData.event_id);
-                  onClose();
+                  const eventId = eventData.id || eventData.event_id;
+                  if (eventId) {
+                    handleDelete(eventId);
+                    onClose();
+                  }
                 }}
                 className="flex-1"
               >

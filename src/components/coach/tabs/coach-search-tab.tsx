@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useCoachStore } from "@/lib/coach-store";
-import { api, SearchPlayer, Position, State } from "@/lib/api";
+import { api, SearchPlayer, Position, State, FollowedPlayerData } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,13 @@ import Image from "next/image";
 
 export function CoachSearchTab() {
   const { setActiveTab } = useCoachStore();
+  const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Add state for followed players
+  const [followedPlayers, setFollowedPlayers] = useState<FollowedPlayerData[]>([]);
+  const [followedPlayersLoading, setFollowedPlayersLoading] = useState(false);
+  const [followedPlayersError, setFollowedPlayersError] = useState<string | null>(null);
 
   // Helper function to validate image URLs
   const isValidImageUrl = (url: string): boolean => {
@@ -67,7 +74,7 @@ export function CoachSearchTab() {
   });
   const resultsPerPage = 12;
 
-  // Fetch all players and filters on component mount
+  // Fetch all players, filters, and followed players on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -93,6 +100,9 @@ export function CoachSearchTab() {
         } else {
           setError(playersResponse.message || "Failed to fetch players");
         }
+
+        // Fetch followed players
+        await fetchFollowedPlayers();
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "Failed to fetch data"
@@ -104,6 +114,55 @@ export function CoachSearchTab() {
 
     fetchData();
   }, []);
+
+  // Add function to fetch followed players
+  const fetchFollowedPlayers = async () => {
+    try {
+      setFollowedPlayersLoading(true);
+      setFollowedPlayersError(null);
+      const response = await api.players.getFollowedPlayers();
+      if (response.status) {
+        setFollowedPlayers(response.data);
+      } else {
+        setFollowedPlayersError(response.message || "Failed to fetch followed players");
+      }
+    } catch (error) {
+      setFollowedPlayersError(error instanceof Error ? error.message : "Failed to fetch followed players");
+    } finally {
+      setFollowedPlayersLoading(false);
+    }
+  };
+
+  // Add function to handle follow/unfollow player
+  const handleFollow = async (playerId: number) => {
+    if (!user?.id) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    try {
+      const response = await api.players.followPlayer({
+        usfl_following_user_id: playerId,
+        usfl_user_id: user.id,
+        usfl_following_user_type: 5 // Assuming 5 is the user type for players
+      });
+
+      if (response.status) {
+        // Refresh followed players list
+        await fetchFollowedPlayers();
+        console.log("Follow/Unfollow successful:", response.message);
+      } else {
+        console.error("Follow/Unfollow failed:", response.message);
+      }
+    } catch (error) {
+      console.error("Error following/unfollowing player:", error);
+    }
+  };
+
+  // Helper function to check if a player is followed
+  const isPlayerFollowed = (playerId: number) => {
+    return followedPlayers.some(player => player.kids_id === playerId);
+  };
 
   // Frontend filtering logic
   const filteredPlayers = useMemo(() => {
@@ -189,10 +248,6 @@ export function CoachSearchTab() {
     selectedState,
     allPlayers.length,
   ]);
-
-  const handleFollow = (playerId: number) => {
-    console.log(`Following player ${playerId}`);
-  };
 
   const handlePlayerClick = (playerId: number) => {
     console.log(`Viewing player ${playerId}`);
@@ -434,6 +489,23 @@ export function CoachSearchTab() {
               </div>
             )}
 
+            {/* Followed Players Error Display */}
+            {followedPlayersError && (
+              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive text-sm font-medium">
+                  Error loading followed players: {followedPlayersError}
+                  <Button 
+                    onClick={fetchFollowedPlayers} 
+                    variant="outline" 
+                    size="sm"
+                    className="ml-4"
+                  >
+                    Retry
+                  </Button>
+                </p>
+              </div>
+            )}
+
             {/* Loading State */}
             {loading && (
               <div className="flex items-center justify-center py-12">
@@ -593,10 +665,15 @@ export function CoachSearchTab() {
 
                             <Button
                               size="sm"
-                              className="w-full h-9 border-2 bg-transparent border-primary hover:bg-primary/20  font-medium transition-all shadow-sm text-primary"
+                              className={`w-full h-9 border-2 font-medium transition-all shadow-sm ${
+                                isPlayerFollowed(player.kids_id) 
+                                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                                  : "bg-transparent border-primary hover:bg-primary/20 text-primary"
+                              }`}
                               onClick={() => handleFollow(player.kids_id)}
+                              disabled={followedPlayersLoading}
                             >
-                              Follow Player
+                              {followedPlayersLoading ? "Loading..." : (isPlayerFollowed(player.kids_id) ? "Unfollow" : "Follow Player")}
                             </Button>
                           </div>
                         </div>

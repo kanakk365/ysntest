@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useCoachStore } from "@/lib/coach-store";
 import { useEventsStore } from "@/lib/events-store";
+import { api, FollowedPlayerData } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,6 +86,52 @@ interface CalendarData {
   events: CalendarEvent[];
 }
 
+interface CalendarApiEvent {
+  event_id: number;
+  event_name: string;
+  event_enty_id: number;
+  event_start_date: string;
+  event_start_time: string;
+  event_end_date: string;
+  event_end_time: string;
+  event_is_recur: number;
+  event_is_allday: number;
+  event_url: string;
+  event_location: string;
+  event_desc: string;
+  event_status: number;
+  event_type_name?: string;
+}
+
+interface CalendarEventData {
+  id?: string | number;
+  event_id?: string | number;
+  title?: string;
+  event_name?: string;
+  start?: string;
+  end?: string;
+  description?: string;
+  location?: string;
+  className?: string;
+  isRecurring?: boolean;
+  isAllDay?: boolean;
+  originalEvent?: ApiEvent;
+  [key: string]: unknown;
+}
+
+interface CalendarEventClickArg {
+  event: {
+    id: string;
+    title: string;
+    start: Date | null;
+    end: Date | null;
+    extendedProps?: {
+      description?: string;
+      location?: string;
+    };
+  };
+}
+
 export function CoachesTab() {
   const {
     players,
@@ -97,10 +145,16 @@ export function CoachesTab() {
   } = useCoachStore();
 
   const { events, loading: eventsLoading, error: eventsError, fetchEvents, createUpdateEvent, deleteEvent } = useEventsStore();
+  const { user } = useAuthStore();
+
+  // Add state for followed players
+  const [followedPlayers, setFollowedPlayers] = useState<FollowedPlayerData[]>([]);
+  const [followedPlayersLoading, setFollowedPlayersLoading] = useState(false);
+  const [followedPlayersError, setFollowedPlayersError] = useState<string | null>(null);
 
   // Calendar state for MyCalender component
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventData | null>(null);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -117,11 +171,61 @@ export function CoachesTab() {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Fetch players and events on component mount
+  // Fetch players, events, and followed players on component mount
   useEffect(() => {
     fetchPlayers();
     fetchEvents();
+    fetchFollowedPlayers();
   }, [fetchPlayers, fetchEvents]);
+
+  // Add function to fetch followed players
+  const fetchFollowedPlayers = async () => {
+    try {
+      setFollowedPlayersLoading(true);
+      setFollowedPlayersError(null);
+      const response = await api.players.getFollowedPlayers();
+      if (response.status) {
+        setFollowedPlayers(response.data);
+      } else {
+        setFollowedPlayersError(response.message || "Failed to fetch followed players");
+      }
+    } catch (error) {
+      setFollowedPlayersError(error instanceof Error ? error.message : "Failed to fetch followed players");
+    } finally {
+      setFollowedPlayersLoading(false);
+    }
+  };
+
+  // Add function to handle follow/unfollow player
+  const handleFollowPlayer = async (playerId: number) => {
+    if (!user?.id) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    try {
+      const response = await api.players.followPlayer({
+        usfl_following_user_id: playerId,
+        usfl_user_id: user.id,
+        usfl_following_user_type: 5 // Assuming 5 is the user type for players
+      });
+
+      if (response.status) {
+        // Refresh followed players list
+        await fetchFollowedPlayers();
+        console.log("Follow/Unfollow successful:", response.message);
+      } else {
+        console.error("Follow/Unfollow failed:", response.message);
+      }
+    } catch (error) {
+      console.error("Error following/unfollowing player:", error);
+    }
+  };
+
+  // Helper function to check if a player is followed
+  const isPlayerFollowed = (playerId: number) => {
+    return followedPlayers.some(player => player.kids_id === playerId);
+  };
 
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [newNote, setNewNote] = useState("");
@@ -311,7 +415,7 @@ export function CoachesTab() {
   const goToNextPage = () => goToPage(currentPage + 1);
 
   // Calendar event handlers for MyCalender
-  const handleEventClick = (eventInfo: EventClickArg) => {
+  const handleEventClick = (eventInfo: CalendarEventClickArg) => {
     console.log('=== Event Click Debug ===');
     console.log('Clicked event:', eventInfo.event);
     console.log('Clicked event ID:', eventInfo.event.id);
@@ -340,14 +444,7 @@ export function CoachesTab() {
       console.log('Found by title match:', transformedEvent);
     }
     
-    // If still not found, try by extendedProps
-    if (!transformedEvent && eventInfo.event.extendedProps) {
-      transformedEvent = transformedEvents.find(e => 
-        e.id === eventInfo.event.extendedProps.id ||
-        String(e.id) === String(eventInfo.event.extendedProps.id)
-      );
-      console.log('Found by extendedProps match:', transformedEvent);
-    }
+    
     
     console.log('Final transformed event:', transformedEvent);
     
@@ -391,7 +488,7 @@ export function CoachesTab() {
   };
 
   // Add edit event handler
-  const handleEditEvent = async (eventData: any) => {
+  const handleEditEvent = (eventData: CalendarEventData) => {
     try {
       // Check if we have the originalEvent property (from calendar click) or updated data (from modal edit)
       const originalEvent = eventData.originalEvent;
@@ -401,11 +498,8 @@ export function CoachesTab() {
         return;
       }
 
-      // Parse the datetime strings
-      const startDate = new Date(eventData.start);
-      const endDate = new Date(eventData.end);
-      
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      // Parse the datetime strings safely
+      if (!eventData.start || !eventData.end) {
         alert('Please enter valid dates');
         return;
       }
@@ -426,13 +520,13 @@ export function CoachesTab() {
       };
 
       const apiEventData = {
-        event_id: eventData.id,
-        event_name: eventData.title,
+        event_id: Number(eventData.id),
+        event_name: eventData.title || '',
         event_enty_id: originalEvent.event_enty_id,
-        event_start_date: formatDate(startDate),
-        event_start_time: formatTime(startDate),
-        event_end_date: formatDate(endDate),
-        event_end_time: formatTime(endDate),
+        event_start_date: formatDate(new Date(eventData.start)),
+        event_start_time: formatTime(new Date(eventData.start)),
+        event_end_date: formatDate(new Date(eventData.end)),
+        event_end_time: formatTime(new Date(eventData.end)),
         event_is_recur: originalEvent.event_is_recur,
         event_is_allday: originalEvent.event_is_allday,
         event_url: originalEvent.event_url,
@@ -441,11 +535,18 @@ export function CoachesTab() {
         event_status: originalEvent.event_status
       };
 
-      await createUpdateEvent(apiEventData);
-      setModalOpen(false);
-    } catch (error) {
-      console.error('Error editing event:', error);
-    }
+             // Fix: Make this function async to allow use of await
+       (async () => {
+         try {
+           await createUpdateEvent(apiEventData);
+           setModalOpen(false);
+         } catch (error) {
+           console.error('Error editing event:', error);
+         }
+       })();
+     } catch (error) {
+       console.error('Error editing event:', error);
+     }
   };
 
   // Add new event handler
@@ -560,6 +661,23 @@ export function CoachesTab() {
           
                     {!loading && !error && players.length > 0 && (
             <div className="rounded-md border border-border">
+              {/* Followed Players Error Display */}
+              {followedPlayersError && (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-t-lg">
+                  <p className="text-destructive text-sm font-medium">
+                    Error loading followed players: {followedPlayersError}
+                    <Button 
+                      onClick={fetchFollowedPlayers} 
+                      variant="outline" 
+                      size="sm"
+                      className="ml-4"
+                    >
+                      Retry
+                    </Button>
+                  </p>
+                </div>
+              )}
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -622,6 +740,15 @@ export function CoachesTab() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
+                          <Button
+                            variant={isPlayerFollowed(parseInt(player.id)) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleFollowPlayer(parseInt(player.id))}
+                            disabled={followedPlayersLoading}
+                          >
+                            {followedPlayersLoading ? "Loading..." : (isPlayerFollowed(parseInt(player.id)) ? "Unfollow" : "Follow")}
+                          </Button>
+                          
                           <Dialog
                             open={showNoteDialog}
                             onOpenChange={setShowNoteDialog}
@@ -908,7 +1035,6 @@ export function CoachesTab() {
                  selectedEvent={selectedEvent}
                  handleDelete={handleDelete}
                  handleEdit={handleEditEvent}
-                 handleOpenModal={handleOpenModal}
                />
              )}
           </CardContent>
@@ -1022,15 +1148,15 @@ export function CoachesTab() {
 
 // Day View Component
 interface DayViewProps {
-  events: any[];
+  events: CalendarEventData[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
-  onEventClick: (eventInfo: any) => void;
+  onEventClick: (eventInfo: CalendarEventClickArg) => void;
   modalOpen: boolean;
   setModalOpen: (open: boolean) => void;
-  selectedEvent: any;
+  selectedEvent: CalendarEventData | null;
   handleDelete: (eventId: string | number) => void;
-  handleEdit: (eventData: any) => void;
+  handleEdit: (eventData: CalendarEventData) => void;
   handleOpenModal: () => void;
 }
 
@@ -1053,8 +1179,9 @@ function DayView({
 
   const getEventsForHour = (hour: Date) => {
     return events.filter(event => {
-      const eventStart = new Date(event.start);
-      const eventEnd = new Date(event.end);
+      if (!event.start || !event.end) return false;
+      const eventStart = new Date(event.start!);
+      const eventEnd = new Date(event.end!);
       const hourStart = hour;
       const hourEnd = add(hour, { hours: 1 });
       
@@ -1115,11 +1242,26 @@ function DayView({
                       <div
                         key={eventIndex}
                         className="mb-2 p-2 bg-blue-100 border border-blue-200 rounded cursor-pointer hover:bg-blue-200 transition-colors"
-                        onClick={() => onEventClick({ event: { id: event.id, title: event.title } })}
+                        onClick={() => {
+                          if (event.id && event.title && event.start && event.end) {
+                            onEventClick({ 
+                              event: { 
+                                id: event.id.toString(), 
+                                title: event.title,
+                                start: new Date(event.start!),
+                                end: new Date(event.end!),
+                                extendedProps: {
+                                  description: event.description || '',
+                                  location: event.location || ''
+                                }
+                              } 
+                            })
+                          }
+                        }}
                       >
                         <div className="font-medium text-sm">{event.title}</div>
                         <div className="text-xs text-gray-600">
-                          {format(new Date(event.start), 'h:mm a')} - {format(new Date(event.end), 'h:mm a')}
+                          {format(new Date(event.start!), 'h:mm a')} - {format(new Date(event.end!), 'h:mm a')}
                         </div>
                         {event.location && (
                           <div className="text-xs text-gray-500 mt-1">
@@ -1141,15 +1283,15 @@ function DayView({
 
 // Week View Component
 interface WeekViewProps {
-  events: any[];
+  events: CalendarEventData[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
-  onEventClick: (eventInfo: any) => void;
+  onEventClick: (eventInfo: CalendarEventClickArg) => void;
   modalOpen: boolean;
   setModalOpen: (open: boolean) => void;
-  selectedEvent: any;
+  selectedEvent: CalendarEventData | null;
   handleDelete: (eventId: string | number) => void;
-  handleEdit: (eventData: any) => void;
+  handleEdit: (eventData: CalendarEventData) => void;
   handleOpenModal: () => void;
 }
 
@@ -1191,7 +1333,8 @@ function WeekView({
 
   const getEventsForDay = (day: Date) => {
     return events.filter(event => {
-      const eventStart = new Date(event.start);
+      if (!event.start) return false;
+      const eventStart = new Date(event.start!);
       return isSameDay(eventStart, day);
     });
   };
@@ -1247,11 +1390,26 @@ function WeekView({
                   <div
                     key={eventIndex}
                     className="mb-1 p-1 bg-blue-100 border border-blue-200 rounded text-xs cursor-pointer hover:bg-blue-200 transition-colors"
-                    onClick={() => onEventClick({ event: { id: event.id, title: event.title } })}
+                    onClick={() => {
+                      if (event.id && event.title && event.start && event.end) {
+                        onEventClick({ 
+                          event: { 
+                            id: event.id.toString(), 
+                            title: event.title,
+                            start: new Date(event.start!),
+                            end: new Date(event.end!),
+                            extendedProps: {
+                              description: event.description || '',
+                              location: event.location || ''
+                            }
+                          } 
+                        })
+                      }
+                    }}
                   >
                     <div className="font-medium truncate">{event.title}</div>
                     <div className="text-gray-600">
-                      {format(new Date(event.start), 'h:mm a')}
+                      {format(new Date(event.start!), 'h:mm a')}
                     </div>
                   </div>
                 ))}

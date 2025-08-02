@@ -3,7 +3,7 @@ import { api, FollowedPlayer, CoachProfile } from './api'
 
 export type CoachTab = "players" | "profile" | "search"
 
-interface Player {
+export interface Player {
   id: string
   fullName: string
   dob: string

@@ -308,6 +308,47 @@ export interface SettingsResponse {
   message: string
 }
 
+// Types for Follow Player API
+export interface FollowPlayerRequest {
+  usfl_following_user_id: number
+  usfl_user_id: number
+  usfl_following_user_type: number
+}
+
+export interface FollowedPlayerData {
+  kids_id: number
+  kids_user_id: number
+  kids_fname: string
+  kids_lname: string
+  kids_email: string
+  kids_mobile: string | null
+  kids_graduating_class: string | null
+  kids_dob: string
+  kids_youtube_url: string | null
+  kids_fb_url: string | null
+  kids_twitter_url: string | null
+  kids_insta_url: string | null
+  main_position: string
+  kids_slug_name: string
+  kids_avatar: string
+  kids_gpa: string | null
+  kids_act: string | null
+  kids_sat: string | null
+  kids_height: string | null
+  kids_weight: string | null
+  kid_user_type: number
+  graduating_year: string
+  logo: string
+  hash_id: string
+  user_hash_id: string
+}
+
+export interface GetFollowedPlayersResponse {
+  status: boolean
+  data: FollowedPlayerData[]
+  message: string
+}
+
 export const api = {
   async fetch(url: string, options: RequestInit = {}) {
     const { user } = useAuthStore.getState()
@@ -527,6 +568,16 @@ export const api = {
 
     async getSearchFilters(): Promise<SearchFiltersResponse> {
       const response = await api.get(`${BASE_URL}/players/search-filters`)
+      return response.json()
+    },
+
+    async followPlayer(data: FollowPlayerRequest): Promise<ApiResponse> {
+      const response = await api.post(`${BASE_URL}/player/follow`, data)
+      return response.json()
+    },
+
+    async getFollowedPlayers(): Promise<GetFollowedPlayersResponse> {
+      const response = await api.get(`${BASE_URL}/player/get-follow`)
       return response.json()
     },
   },
