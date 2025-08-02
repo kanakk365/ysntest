@@ -197,17 +197,24 @@ export function CoachesTab() {
   };
 
   // Add function to handle follow/unfollow player
-  const handleFollowPlayer = async (playerId: number) => {
+  const handleFollowPlayer = async (playerId: string) => {
     if (!user?.id) {
       console.error("User not authenticated");
       return;
     }
 
+    // Find the player to get their kid_user_type
+    const player = players.find(p => p.id === playerId);
+    if (!player) {
+      console.error("Player not found");
+      return;
+    }
+
     try {
       const response = await api.players.followPlayer({
-        usfl_following_user_id: playerId,
+        usfl_following_user_id: player.kids_user_id,
         usfl_user_id: user.id,
-        usfl_following_user_type: 5 // Assuming 5 is the user type for players
+        usfl_following_user_type: player.kid_user_type
       });
 
       if (response.status) {
@@ -743,7 +750,7 @@ export function CoachesTab() {
                           <Button
                             variant={isPlayerFollowed(parseInt(player.id)) ? "default" : "outline"}
                             size="sm"
-                            onClick={() => handleFollowPlayer(parseInt(player.id))}
+                            onClick={() => handleFollowPlayer(player.id)}
                             disabled={followedPlayersLoading}
                           >
                             {followedPlayersLoading ? "Loading..." : (isPlayerFollowed(parseInt(player.id)) ? "Unfollow" : "Follow")}

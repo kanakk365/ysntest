@@ -152,6 +152,7 @@ export interface FollowedPlayer {
   kids_created: string
   kids_modified: string | null
   kids_status: number
+  kid_user_type: number
   logo: string
   hash_id: string
   user_hash_id: string
@@ -185,6 +186,7 @@ export interface SearchPlayer {
   kids_sat: string | null
   kids_height: string | null
   kids_weight: string | null
+  kid_user_type: number
   graduating_year: string
   logo: string
   hash_id: string

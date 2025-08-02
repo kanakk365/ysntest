@@ -140,11 +140,18 @@ export function CoachSearchTab() {
       return;
     }
 
+    // Find the player to get their kid_user_type
+    const player = allPlayers.find(p => p.kids_id === playerId);
+    if (!player) {
+      console.error("Player not found");
+      return;
+    }
+
     try {
       const response = await api.players.followPlayer({
-        usfl_following_user_id: playerId,
+        usfl_following_user_id: player.kids_user_id,
         usfl_user_id: user.id,
-        usfl_following_user_type: 5 // Assuming 5 is the user type for players
+        usfl_following_user_type: player.kid_user_type
       });
 
       if (response.status) {

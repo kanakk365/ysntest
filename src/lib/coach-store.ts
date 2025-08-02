@@ -21,6 +21,10 @@ export interface Player {
   mobile?: string | null
   highSchool?: string | null
   graduatingClass?: string | null
+  // Store original API data for follow/unfollow functionality
+  kids_id: number
+  kids_user_id: number
+  kid_user_type: number
 }
 
 interface CoachState {
@@ -78,7 +82,11 @@ export const useCoachStore = create<CoachState>((set, get) => ({
           email: player.kids_email,
           mobile: player.kids_mobile,
           highSchool: player.kids_high_school,
-          graduatingClass: player.kids_graduating_class
+          graduatingClass: player.kids_graduating_class,
+          // Store original API data for follow/unfollow functionality
+          kids_id: player.kids_id,
+          kids_user_id: player.kids_user_id,
+          kid_user_type: player.kid_user_type
         }))
         set({
           players: transformedPlayers,
