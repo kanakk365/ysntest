@@ -6,13 +6,25 @@ import { SectionCards } from "@/components/superAdmin/dashboard/section-cards"
 import { ChartBarDefault } from "@/components/ui/bar-chart"
 import { ChartPieSimple } from "../../ui/pie-chart"
 import { useDashboardStore } from "@/lib/dashboard-store"
+import { useAuthStore } from "@/lib/auth-store"
 
 export function DashboardContent() {
   const { dashboardData, loading, error, fetchDashboardData } = useDashboardStore()
+  const { user } = useAuthStore()
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [fetchDashboardData])
+    console.log('DashboardContent: useEffect triggered', { 
+      user: user ? { id: user.id, hasToken: !!user.token, user_type: user.user_type } : null 
+    })
+    
+    // Only fetch dashboard data if user is authenticated and has a valid token
+    if (user?.token && user?.id) {
+      console.log('DashboardContent: User authenticated, fetching dashboard data')
+      fetchDashboardData()
+    } else {
+      console.log('DashboardContent: User not authenticated yet, skipping dashboard data fetch')
+    }
+  }, [fetchDashboardData, user?.token, user?.id])
 
   if (loading) {
     return (

@@ -1,6 +1,8 @@
 "use client"
 
 import { useAuthStore } from "@/lib/auth-store"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
 import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
@@ -11,8 +13,57 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function Home() {
-  const { user } = useAuthStore()
+  const { user, isAuthenticated, loading } = useAuthStore()
+  const router = useRouter()
 
+  useEffect(() => {
+    // If not loading and not authenticated, redirect to login
+    if (!loading && !isAuthenticated) {
+      router.push('/login')
+      return
+    }
+
+    // If authenticated, redirect based on user type
+    if (!loading && isAuthenticated && user) {
+      if (user.user_type === 1) {
+        // Super Admin - already on the right page
+        return
+      } else if (user.user_type === 3) {
+        // Coach - redirect to coach dashboard
+        router.push('/dashboard/coach')
+        return
+      }
+    }
+  }, [isAuthenticated, loading, user, router])
+
+  // Show loading while authentication is being processed
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading...</div>
+      </div>
+    )
+  }
+
+  // If not authenticated, show loading (will redirect to login)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Redirecting to login...</div>
+      </div>
+    )
+  }
+
+  // If authenticated but not super admin, show loading (will redirect)
+  if (user && user.user_type !== 1) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Redirecting...</div>
+      </div>
+    )
+  }
+
+  // Show super admin dashboard
   return (
     <DashboardProvider>
       <div className="h-screen bg-background">

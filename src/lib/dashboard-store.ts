@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from './api'
+import { useAuthStore } from './auth-store'
 
 export type DashboardTab = "dashboard" | "profile" | "opponents" | "coaches" | "settings"
 
@@ -81,6 +82,17 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   fetchDashboardData: async () => {
+    // Check if user is authenticated before making API call
+    const { user } = useAuthStore.getState()
+    
+    if (!user?.token) {
+      console.log('DashboardStore: No auth token, skipping dashboard data fetch')
+      set({ loading: false, error: 'Authentication required' })
+      return
+    }
+
+    console.log('DashboardStore: Making API call to fetch dashboard data')
+
     set({ loading: true, error: null })
 
     try {

@@ -18,6 +18,7 @@ interface AuthState {
   logout: () => Promise<boolean>
   clearError: () => void
   setHydrated: () => void
+  setUser: (user: User) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -126,14 +127,27 @@ export const useAuthStore = create<AuthState>()(
       setHydrated: () => {
         set({ loading: false })
       },
+
+      setUser: (user: User) => {
+        console.log('AuthStore: setUser called with', user)
+        set({
+          user,
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        })
+        console.log('AuthStore: User state set successfully')
+      },
     }),
     {
       name: 'ysn-auth-storage',
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
       onRehydrateStorage: () => (state) => {
+        console.log('AuthStore: Rehydrating state', state)
         // Set loading to false after hydration is complete
         if (state) {
           state.setHydrated()
+          console.log('AuthStore: State hydrated successfully')
         }
       },
     }

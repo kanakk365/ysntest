@@ -173,13 +173,21 @@ export function CoachesTab() {
 
   // Fetch players, events, and followed players on component mount
   useEffect(() => {
-    fetchPlayers();
-    fetchEvents();
-    fetchFollowedPlayers();
-  }, [fetchPlayers, fetchEvents]);
+    // Only fetch data if user is authenticated
+    if (user?.token) {
+      fetchPlayers();
+      fetchEvents();
+      fetchFollowedPlayers();
+    }
+  }, [fetchPlayers, fetchEvents, user?.token]);
 
   // Add function to fetch followed players
   const fetchFollowedPlayers = async () => {
+    // Only fetch if user is authenticated
+    if (!user?.token) {
+      return;
+    }
+
     try {
       setFollowedPlayersLoading(true);
       setFollowedPlayersError(null);
