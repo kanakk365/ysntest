@@ -28,8 +28,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const dataParam = searchParams.get('data')
     const message = searchParams.get('message')
 
+    // Clear authentication state for any external redirect (success or failure)
+    if (status && (status === 'success' || status === 'error')) {
+      localStorage.removeItem('ysn-auth-storage')
+    }
+
     if (status === 'success' && dataParam && !isAuthenticated) {
-      try {
+      try {        
         // Decode the URL-encoded data
         const decodedData = decodeURIComponent(dataParam)
         const userData = JSON.parse(decodedData)
