@@ -60,7 +60,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   const handleLogout = async () => {
     await logout()
-    router.push("/login")
+    window.location.href = "https://beta.ysn.tv/login"
   }
 
   return (

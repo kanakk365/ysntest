@@ -51,7 +51,7 @@ export function CoachAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
 
   const handleLogout = async () => {
     await logout()
-    router.push("/login")
+    window.location.href = "https://beta.ysn.tv/login"
   }
 
   return (

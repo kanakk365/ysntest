@@ -43,7 +43,7 @@ export function NavUser({
   
   const handleLogout = async () => {
     await logout()
-    router.push("/login")
+    window.location.href = "https://beta.ysn.tv/login"
   }
 
   const toggleTheme = () => {
