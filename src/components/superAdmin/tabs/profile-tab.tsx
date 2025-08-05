@@ -233,7 +233,7 @@ export function ProfileTab() {
             <div>
               <h2 className="text-2xl font-bold">{profile.name}</h2>
               <Badge variant="secondary">
-                {profile.user_type === 1 ? "Super Admin" : "User"}
+                {profile.user_type === 9 ? "Super Admin" : "User"}
               </Badge>
             </div>
           </CardTitle>

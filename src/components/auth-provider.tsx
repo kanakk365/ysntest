@@ -58,7 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setTimeout(() => {
             console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
             // Clear the URL parameters by redirecting to the appropriate dashboard
-            if (userData.user_type === 1) {
+            if (userData.user_type === 9) {
               // Super Admin
               router.replace('/dashboard')
             } else if (userData.user_type === 3) {
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If authenticated, redirect based on user type
       if (isAuthenticated && user) {
-        if (user.user_type === 1 && pathname !== "/dashboard") {
+        if (user.user_type === 9 && pathname !== "/dashboard") {
           router.push("/dashboard")
         } else if (user.user_type === 3 && pathname !== "/dashboard/coach") {
           router.push("/dashboard/coach")
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // If authenticated, show the appropriate dashboard
   if (isAuthenticated && user) {
-    if (user.user_type === 1 && pathname === "/dashboard") {
+    if (user.user_type === 9 && pathname === "/dashboard") {
       return <>{children}</>
     } else if (user.user_type === 3 && pathname === "/dashboard/coach") {
       return <>{children}</>

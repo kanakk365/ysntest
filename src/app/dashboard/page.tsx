@@ -21,7 +21,7 @@ export default function Dashboard() {
         router.push("/login")
       } else if (user?.user_type === 3) {
         router.push("/dashboard/coach")
-      } else if (user?.user_type === 1) {
+      } else if (user?.user_type === 9) {
         // Super admin stays on dashboard
         return
       }

@@ -25,7 +25,7 @@ export default function Home() {
 
     // If authenticated, redirect based on user type
     if (!loading && isAuthenticated && user) {
-      if (user.user_type === 1) {
+      if (user.user_type === 9) {
         // Super Admin - already on the right page
         return
       } else if (user.user_type === 3) {
@@ -55,7 +55,7 @@ export default function Home() {
   }
 
   // If authenticated but not super admin, show loading (will redirect)
-  if (user && user.user_type !== 1) {
+  if (user && user.user_type !== 9) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-foreground">Redirecting...</div>
