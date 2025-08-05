@@ -17,9 +17,9 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    // If not loading and not authenticated, redirect to login
+    // If not loading and not authenticated, redirect to external login
     if (!loading && !isAuthenticated) {
-      router.push('/login')
+      window.location.href = 'https://beta.ysn.tv/login'
       return
     }
 

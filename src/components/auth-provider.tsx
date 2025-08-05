@@ -70,17 +70,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (error) {
         console.error('Error parsing login data:', error)
-        // If there's an error parsing the data, redirect to login
-        router.replace('/login')
+        // If there's an error parsing the data, redirect to external login
+        window.location.href = 'https://beta.ysn.tv/login'
         return
       }
     }
 
     // Only handle normal authentication flow if we're not processing URL parameters
     if (!loading && !searchParams.get('status')) {
-      // If not authenticated and not on login page, redirect to login
+      // If not authenticated and not on login page, redirect to external login
       if (!isAuthenticated && pathname !== "/login") {
-        router.push("/login")
+        window.location.href = "https://beta.ysn.tv/login"
         return
       }
 
