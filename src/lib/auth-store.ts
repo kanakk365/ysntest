@@ -136,6 +136,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           isAuthenticated: true,
           loading: false,
+          hydrated: true,
           error: null,
         })
         console.log('AuthStore: User state set successfully')
@@ -144,12 +145,21 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'ysn-auth-storage',
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      skipHydration: false,
       onRehydrateStorage: () => (state) => {
         console.log('AuthStore: Rehydrating state', state)
         // Set loading to false after hydration is complete
         if (state) {
+          // Ensure isAuthenticated is properly set based on user data
+          if (state.user && state.user.token && !state.isAuthenticated) {
+            console.log('AuthStore: User data found but not authenticated, fixing state')
+            state.isAuthenticated = true
+          }
           state.setHydrated()
-          console.log('AuthStore: State hydrated successfully')
+          console.log('AuthStore: State hydrated successfully', { 
+            hasUser: !!state.user, 
+            isAuthenticated: state.isAuthenticated 
+          })
         }
       },
     }

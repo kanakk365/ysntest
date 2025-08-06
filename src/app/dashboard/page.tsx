@@ -10,14 +10,15 @@ import { useSidebarMobileSync } from "@/lib/sidebar-store"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 
 export default function Dashboard() {
-  const { user, isAuthenticated, loading } = useAuthStore()
+  const { user, isAuthenticated, loading, hydrated } = useAuthStore()
   const router = useRouter()
   
   useSidebarMobileSync()
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
+    // Only handle redirects after the store is properly hydrated
+    if (!loading && hydrated) {
+      if (!isAuthenticated && !user) {
         router.push("/login")
       } else if (user?.user_type === 3) {
         router.push("/dashboard/coach")
@@ -26,9 +27,9 @@ export default function Dashboard() {
         return
       }
     }
-  }, [isAuthenticated, loading, user, router])
+  }, [isAuthenticated, loading, hydrated, user, router])
 
-  if (loading) {
+  if (loading || !hydrated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-foreground">Loading...</div>
@@ -36,7 +37,7 @@ export default function Dashboard() {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-foreground">Redirecting to login...</div>

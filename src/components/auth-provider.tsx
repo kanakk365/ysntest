@@ -14,6 +14,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  // Debug localStorage on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('ysn-auth-storage')
+      console.log('AuthProvider: Initial localStorage check:', stored ? 'Data found' : 'No data found')
+      if (stored) {
+        console.log('AuthProvider: Stored data preview:', stored.substring(0, 100) + '...')
+      }
+    }
+  }, [])
+
   useEffect(() => {
     console.log('AuthProvider: useEffect triggered', { 
       isAuthenticated, 
@@ -28,8 +39,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const status = searchParams.get('status')
     const dataParam = searchParams.get('data')
 
-    // Clear authentication state for any external redirect (success or failure)
-    if (status && (status === 'success' || status === 'error')) {
+    // Clear authentication state only for error status (not success)
+    if (status === 'error') {
       localStorage.removeItem('ysn-auth-storage')
     }
 
@@ -53,6 +64,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           })
           
           console.log('AuthProvider: User set, waiting before redirect...')
+          
+          // Verify the data was persisted to localStorage
+          setTimeout(() => {
+            const stored = localStorage.getItem('ysn-auth-storage')
+            console.log('AuthProvider: Checking localStorage after setUser:', stored ? 'Data found' : 'No data found')
+          }, 100)
           
           // Add a longer delay to ensure the state is properly set and persisted
           setTimeout(() => {
@@ -87,8 +104,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('AuthProvider: Normal auth flow check', { isAuthenticated, pathname, user })
       
       // If not authenticated and not on login page, redirect to external login
-      if (!isAuthenticated && pathname !== "/login") {
-        console.log('AuthProvider: Not authenticated, redirecting to external login')
+      // BUT only if we're sure there's no user data (check both isAuthenticated and user)
+      if (!isAuthenticated && !user && pathname !== "/login") {
+        console.log('AuthProvider: Not authenticated and no user data, redirecting to external login')
         window.location.href = "https://beta.ysn.tv/login"
         return
       }
