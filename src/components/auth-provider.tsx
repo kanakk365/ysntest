@@ -26,7 +26,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Handle login redirect with URL parameters
     const status = searchParams.get('status')
     const dataParam = searchParams.get('data')
-    const message = searchParams.get('message')
 
     // Clear authentication state for any external redirect (success or failure)
     if (status && (status === 'success' || status === 'error')) {
@@ -83,17 +82,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Only handle normal authentication flow if we're not processing URL parameters
     if (!loading && !searchParams.get('status')) {
+      console.log('AuthProvider: Normal auth flow check', { isAuthenticated, pathname, user })
+      
       // If not authenticated and not on login page, redirect to external login
       if (!isAuthenticated && pathname !== "/login") {
+        console.log('AuthProvider: Not authenticated, redirecting to external login')
         window.location.href = "https://beta.ysn.tv/login"
         return
       }
 
       // If authenticated, redirect based on user type
       if (isAuthenticated && user) {
+        console.log('AuthProvider: User authenticated, checking user type and pathname', { user_type: user.user_type, pathname })
         if (user.user_type === 9 && pathname !== "/dashboard") {
+          console.log('AuthProvider: Redirecting super admin to dashboard')
           router.push("/dashboard")
         } else if (user.user_type === 3 && pathname !== "/dashboard/coach") {
+          console.log('AuthProvider: Redirecting coach to coach dashboard')
           router.push("/dashboard/coach")
         }
       }
@@ -116,9 +121,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // If authenticated, show the appropriate dashboard
   if (isAuthenticated && user) {
-    if (user.user_type === 9 && pathname === "/dashboard") {
-      return <>{children}</>
-    } else if (user.user_type === 3 && pathname === "/dashboard/coach") {
+    console.log('AuthProvider: Rendering check', { user_type: user.user_type, pathname })
+    if ((user.user_type === 9 && pathname === "/dashboard") || 
+        (user.user_type === 3 && pathname === "/dashboard/coach")) {
       return <>{children}</>
     }
   }
