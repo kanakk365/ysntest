@@ -9,7 +9,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { user, isAuthenticated, loading, setUser } = useAuthStore()
+  const { user, isAuthenticated, loading, hydrated, setUser } = useAuthStore()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -18,6 +18,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('AuthProvider: useEffect triggered', { 
       isAuthenticated, 
       loading, 
+      hydrated,
       user: user ? { id: user.id, hasToken: !!user.token, user_type: user.user_type } : null,
       pathname,
       hasStatusParam: !!searchParams.get('status')
@@ -81,7 +82,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // Only handle normal authentication flow if we're not processing URL parameters
-    if (!loading && !searchParams.get('status')) {
+    // AND we're properly hydrated (to avoid redirecting during rehydration)
+    if (!loading && hydrated && !searchParams.get('status')) {
       console.log('AuthProvider: Normal auth flow check', { isAuthenticated, pathname, user })
       
       // If not authenticated and not on login page, redirect to external login
@@ -103,10 +105,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
     }
-  }, [isAuthenticated, loading, user, router, pathname, searchParams, setUser])
+  }, [isAuthenticated, loading, hydrated, user, router, pathname, searchParams, setUser])
 
   // Show loading screen while authentication state is being determined
-  if (loading) {
+  if (loading || !hydrated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-foreground">Loading...</div>

@@ -13,6 +13,7 @@ interface AuthState {
   user: User | null
   isAuthenticated: boolean
   loading: boolean
+  hydrated: boolean
   error: string | null
   login: (email: string, password: string) => Promise<boolean>
   logout: () => Promise<boolean>
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       loading: true, // Start with loading true
+      hydrated: false, // Start with hydrated false
       error: null,
 
       login: async (email: string, password: string) => {
@@ -61,7 +63,7 @@ export const useAuthStore = create<AuthState>()(
             })
             return false
           }
-        } catch (error) {
+        } catch {
           set({
             loading: false,
             error: 'Network error. Please try again.',
@@ -125,7 +127,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setHydrated: () => {
-        set({ loading: false })
+        set({ loading: false, hydrated: true })
       },
 
       setUser: (user: User) => {
