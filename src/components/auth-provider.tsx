@@ -2,7 +2,7 @@
 
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { useEffect, ReactNode } from "react"
+import { useEffect, useState, ReactNode } from "react"
 
 interface AuthProviderProps {
   children: ReactNode
@@ -13,6 +13,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false)
 
   // Clear localStorage for specific scenarios to ensure fresh state
   useEffect(() => {
@@ -66,6 +67,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     if (status === 'success' && dataParam) {
+      setIsProcessingLogin(true) // Set flag to prevent normal auth flow
+      
       try {        
         // Decode the URL-encoded data first
         const decodedData = decodeURIComponent(dataParam)
@@ -101,6 +104,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
               userType: currentState.user?.user_type
             })
             
+            setIsProcessingLogin(false) // Clear flag before redirect
+            
             if (currentState.isAuthenticated && currentState.user) {
               console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
               // Clear the URL parameters by redirecting to the appropriate dashboard
@@ -126,6 +131,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               })
               
               setTimeout(() => {
+                setIsProcessingLogin(false) // Clear flag
                 if (userData.user_type === 9) {
                   router.replace('/dashboard')
                 } else if (userData.user_type === 3) {
@@ -150,13 +156,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Only handle normal authentication flow if we're not processing URL parameters
     // AND we're properly hydrated (to avoid redirecting during rehydration)
-    if (!loading && hydrated && !searchParams.get('status')) {
+    // AND we're not currently processing a login
+    const hasStatusParam = searchParams.get('status')
+    
+    if (!loading && hydrated && !hasStatusParam && !isProcessingLogin) {
       console.log('AuthProvider: Normal auth flow check', { 
         isAuthenticated, 
         pathname, 
         user: user ? { id: user.id, user_type: user.user_type, hasToken: !!user.token } : null,
         loading,
-        hydrated
+        hydrated,
+        isProcessingLogin
       })
       
       // If not authenticated and not on login page, redirect to external login
@@ -178,8 +188,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           router.push("/dashboard/coach")
         }
       }
+    } else if (hasStatusParam) {
+      console.log('AuthProvider: Skipping normal auth flow - processing URL parameters')
+    } else if (isProcessingLogin) {
+      console.log('AuthProvider: Skipping normal auth flow - currently processing login')
     }
-  }, [isAuthenticated, loading, hydrated, user, router, pathname, searchParams, setUser])
+  }, [isAuthenticated, loading, hydrated, user, router, pathname, searchParams, setUser, isProcessingLogin])
 
   // Show loading screen while authentication state is being determined
   if (loading || !hydrated) {
@@ -190,8 +204,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     )
   }
 
-  // If we have URL parameters for login, show loading while processing
-  if (searchParams.get('status')) {
+  // If we have URL parameters for login or we're processing, show loading while processing
+  if (searchParams.get('status') || isProcessingLogin) {
+    console.log('AuthProvider: Showing processing screen for status:', searchParams.get('status'), 'isProcessingLogin:', isProcessingLogin)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-foreground">Processing login...</div>
@@ -201,22 +216,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // If not authenticated and on login page, show login
   if (!isAuthenticated && pathname === "/login") {
+    console.log('AuthProvider: Showing login page')
     return <>{children}</>
   }
 
   // If authenticated, show the appropriate dashboard
   if (isAuthenticated && user) {
-    console.log('AuthProvider: Rendering check', { user_type: user.user_type, pathname })
+    console.log('AuthProvider: Rendering check', { user_type: user.user_type, pathname, isAuthenticated, hasUser: !!user })
     if ((user.user_type === 9 && pathname === "/dashboard") || 
         (user.user_type === 3 && pathname === "/dashboard/coach")) {
+      console.log('AuthProvider: Rendering children for authenticated user')
       return <>{children}</>
+    } else {
+      // User is authenticated but on wrong path - let the useEffect handle redirect
+      console.log('AuthProvider: User authenticated but on wrong path, showing redirecting...')
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-foreground">Redirecting to dashboard...</div>
+        </div>
+      )
     }
   }
 
-  // Show loading while redirecting
+  // If we reach here, user is not authenticated and not on login page
+  console.log('AuthProvider: Fallback - showing loading while determining auth state', { 
+    isAuthenticated, 
+    hasUser: !!user, 
+    pathname, 
+    loading, 
+    hydrated 
+  })
+  
+  // Show loading while redirecting or determining state
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-foreground">Redirecting...</div>
+      <div className="text-foreground">Loading...</div>
     </div>
   )
 } 
