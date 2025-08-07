@@ -14,24 +14,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // Immediately clear localStorage if on login page
+  // Immediately clear localStorage if on login page or if we have URL parameters indicating a new login
   useEffect(() => {
-    if (pathname === '/login') {
+    const status = searchParams.get('status')
+    const dataParam = searchParams.get('data')
+    
+    // Clear localStorage if:
+    // 1. We're on the login page
+    // 2. We have URL parameters indicating a new login attempt (success or error)
+    // 3. We're on the root path with login parameters
+    if (pathname === '/login' || 
+        (status && dataParam) || 
+        (pathname === '/' && status)) {
       localStorage.clear()
-      console.log('AuthProvider: Cleared localStorage for login page')
+      console.log('AuthProvider: Cleared localStorage due to login page or URL parameters')
     }
-  }, [pathname])
+  }, [pathname, searchParams])
 
   // Debug localStorage on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('ysn-auth-storage')
+      const urlParams = new URLSearchParams(window.location.search)
+      const status = urlParams.get('status')
+      const dataParam = urlParams.get('data')
+      
       console.log('AuthProvider: Initial localStorage check:', stored ? 'Data found' : 'No data found')
+      console.log('AuthProvider: URL parameters:', { status, hasData: !!dataParam, pathname })
+      
       if (stored) {
         console.log('AuthProvider: Stored data preview:', stored.substring(0, 100) + '...')
       }
     }
-  }, [])
+  }, [pathname, searchParams])
 
   useEffect(() => {
     console.log('AuthProvider: useEffect triggered', { 
@@ -47,13 +62,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const status = searchParams.get('status')
     const dataParam = searchParams.get('data')
 
-    // Clear authentication state only for error status (not success)
-    if (status === 'error') {
+    // Clear authentication state for both error and success status to ensure clean state
+    if (status === 'error' || status === 'success') {
       localStorage.clear()
-      console.log('AuthProvider: Cleared localStorage due to error status')
+      console.log('AuthProvider: Cleared localStorage due to login status:', status)
     }
 
-    if (status === 'success' && dataParam && !isAuthenticated) {
+    if (status === 'success' && dataParam) {
       try {        
         // Decode the URL-encoded data
         const decodedData = decodeURIComponent(dataParam)
@@ -63,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (userData.token && userData.id && userData.name && userData.email && userData.user_type) {
           console.log('AuthProvider: Setting user in auth store', userData)
           
-          // Set the user in the auth store
+          // Set the user in the auth store (regardless of current authentication state)
           setUser({
             id: userData.id,
             token: userData.token,
@@ -94,7 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Unknown user type, redirect to login
               router.replace('/login')
             }
-          }, 500)
+          }, 1000) // Increased delay to ensure proper state persistence
           return
         } else {
           console.error('Invalid user data structure:', userData)
@@ -139,6 +154,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-foreground">Loading...</div>
+      </div>
+    )
+  }
+
+  // If we have URL parameters for login, show loading while processing
+  if (searchParams.get('status')) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Processing login...</div>
       </div>
     )
   }

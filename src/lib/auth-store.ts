@@ -49,11 +49,24 @@ export const clearAuthStorage = () => {
   }
 }
 
-// Function to check and clear localStorage if on login page
+// Function to check and clear localStorage if on login page or has login URL parameters
 export const checkAndClearStorage = () => {
-  if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-    console.log('AuthStore: On login page, clearing localStorage before store initialization')
-    localStorage.clear()
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname
+    const urlParams = new URLSearchParams(window.location.search)
+    const status = urlParams.get('status')
+    const dataParam = urlParams.get('data')
+    
+    // Clear localStorage if:
+    // 1. We're on the login page
+    // 2. We have URL parameters indicating a new login attempt
+    // 3. We're on the root path with login parameters
+    if (pathname === '/login' || 
+        (status && dataParam) || 
+        (pathname === '/' && status)) {
+      console.log('AuthStore: Clearing localStorage due to login page or URL parameters')
+      localStorage.clear()
+    }
   }
 }
 
@@ -188,6 +201,8 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user: User) => {
         console.log('AuthStore: setUser called with', user)
+        // Clear any existing storage before setting new user
+        clearAllLocalStorage()
         set({
           user,
           isAuthenticated: true,
@@ -205,34 +220,43 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         console.log('AuthStore: Rehydrating state', state)
         
-        // Check if we're on the login page
-        const isOnLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login'
-        
-        if (state) {
-          // If we're on the login page, always clear localStorage and reset state
-          if (isOnLoginPage) {
-            console.log('AuthStore: On login page, clearing localStorage and resetting state')
-            clearAllLocalStorage()
-            // Reset the state completely
-            state.user = null
-            state.isAuthenticated = false
-            state.loading = false
-            state.hydrated = false
-            state.error = null
-            return
-          }
+        if (typeof window !== 'undefined') {
+          const pathname = window.location.pathname
+          const urlParams = new URLSearchParams(window.location.search)
+          const status = urlParams.get('status')
+          const dataParam = urlParams.get('data')
           
-          // Ensure isAuthenticated is properly set based on user data
-          if (state.user && state.user.token && !state.isAuthenticated) {
-            console.log('AuthStore: User data found but not authenticated, fixing state')
-            state.isAuthenticated = true
-          }
+          // Check if we should clear storage due to login page or URL parameters
+          const shouldClearStorage = pathname === '/login' || 
+                                   (status && dataParam) || 
+                                   (pathname === '/' && status)
           
-          state.setHydrated()
-          console.log('AuthStore: State hydrated successfully', { 
-            hasUser: !!state.user, 
-            isAuthenticated: state.isAuthenticated 
-          })
+          if (state) {
+            // If we should clear storage, reset state completely
+            if (shouldClearStorage) {
+              console.log('AuthStore: Clearing localStorage and resetting state due to login context')
+              clearAllLocalStorage()
+              // Reset the state completely
+              state.user = null
+              state.isAuthenticated = false
+              state.loading = false
+              state.hydrated = false
+              state.error = null
+              return
+            }
+            
+            // Ensure isAuthenticated is properly set based on user data
+            if (state.user && state.user.token && !state.isAuthenticated) {
+              console.log('AuthStore: User data found but not authenticated, fixing state')
+              state.isAuthenticated = true
+            }
+            
+            state.setHydrated()
+            console.log('AuthStore: State hydrated successfully', { 
+              hasUser: !!state.user, 
+              isAuthenticated: state.isAuthenticated 
+            })
+          }
         }
       },
     }
