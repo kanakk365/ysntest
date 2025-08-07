@@ -20,6 +20,22 @@ interface AuthState {
   clearError: () => void
   setHydrated: () => void
   setUser: (user: User) => void
+  clearAllStorage: () => void
+}
+
+// Function to clear all localStorage data
+const clearAllLocalStorage = () => {
+  try {
+    // Log what's being cleared for debugging
+    const keys = Object.keys(localStorage)
+    console.log('AuthStore: Clearing localStorage keys:', keys)
+    
+    // Clear all localStorage items
+    localStorage.clear()
+    console.log('AuthStore: All localStorage data cleared successfully')
+  } catch (error) {
+    console.warn('AuthStore: Error clearing localStorage:', error)
+  }
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -31,7 +47,22 @@ export const useAuthStore = create<AuthState>()(
       hydrated: false, // Start with hydrated false
       error: null,
 
+      clearAllStorage: () => {
+        clearAllLocalStorage()
+        // Reset the store state
+        set({
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+          hydrated: false,
+          error: null,
+        })
+      },
+
       login: async (email: string, password: string) => {
+        // Clear all localStorage data before attempting login
+        clearAllLocalStorage()
+        
         set({ loading: true, error: null })
 
         try {
@@ -74,6 +105,9 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         const { user } = get()
+        
+        // Clear all localStorage data when logging out
+        clearAllLocalStorage()
         
         if (!user?.token) {
           // If no token, just clear local state

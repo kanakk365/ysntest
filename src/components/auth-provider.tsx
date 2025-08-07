@@ -41,7 +41,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Clear authentication state only for error status (not success)
     if (status === 'error') {
-      localStorage.removeItem('ysn-auth-storage')
+      localStorage.clear()
+      console.log('AuthProvider: Cleared localStorage due to error status')
     }
 
     if (status === 'success' && dataParam && !isAuthenticated) {
