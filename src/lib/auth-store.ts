@@ -41,12 +41,24 @@ const clearAllLocalStorage = () => {
 // Function to clear localStorage before auth store rehydrates
 export const clearAuthStorage = () => {
   try {
-    localStorage.removeItem('ysn-auth-storage')
-    console.log('AuthStore: Auth storage cleared before rehydration')
+    // Clear all localStorage data, not just the auth storage
+    localStorage.clear()
+    console.log('AuthStore: All localStorage data cleared before rehydration')
   } catch (error) {
     console.warn('AuthStore: Error clearing auth storage:', error)
   }
 }
+
+// Function to check and clear localStorage if on login page
+export const checkAndClearStorage = () => {
+  if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+    console.log('AuthStore: On login page, clearing localStorage before store initialization')
+    localStorage.clear()
+  }
+}
+
+// Call this immediately when the module loads
+checkAndClearStorage()
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -197,11 +209,11 @@ export const useAuthStore = create<AuthState>()(
         const isOnLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login'
         
         if (state) {
-          // If we're on the login page and there's stored authentication data, clear it
-          if (isOnLoginPage && state.user && state.isAuthenticated) {
-            console.log('AuthStore: On login page with stored auth data, clearing localStorage')
+          // If we're on the login page, always clear localStorage and reset state
+          if (isOnLoginPage) {
+            console.log('AuthStore: On login page, clearing localStorage and resetting state')
             clearAllLocalStorage()
-            // Reset the state
+            // Reset the state completely
             state.user = null
             state.isAuthenticated = false
             state.loading = false

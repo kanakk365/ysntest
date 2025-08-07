@@ -14,6 +14,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
+  // Immediately clear localStorage if on login page
+  useEffect(() => {
+    if (pathname === '/login') {
+      localStorage.clear()
+      console.log('AuthProvider: Cleared localStorage for login page')
+    }
+  }, [pathname])
+
   // Debug localStorage on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {

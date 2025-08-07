@@ -4,6 +4,12 @@ import { useState, useEffect } from "react"
 import { useAuthStore, clearAuthStorage } from "@/lib/auth-store"
 import { Eye, EyeOff } from "lucide-react"
 
+// Immediately clear localStorage when this module is loaded
+if (typeof window !== 'undefined') {
+  localStorage.clear()
+  console.log('LoginPage: Immediate localStorage clearing on module load')
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
