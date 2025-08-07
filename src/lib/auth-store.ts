@@ -59,11 +59,10 @@ export const checkAndClearStorage = () => {
     // Clear localStorage if:
     // 1. We're on the login page WITHOUT any status (regular login page)
     // 2. We have error status
-    // 3. We have success status (new successful login - always clear old data first)
-    // 4. We're on the root path with error status
+    // 3. We're on the root path with error status
+    // DON'T clear for success status - let AuthProvider handle it AFTER processing
     if ((pathname === '/login' && !status) || 
         status === 'error' || 
-        status === 'success' ||
         (pathname === '/' && status === 'error')) {
       console.log('AuthStore: Clearing localStorage for fresh state, status:', status || 'none')
       localStorage.clear()
@@ -228,7 +227,6 @@ export const useAuthStore = create<AuthState>()(
           // Check if we should clear storage 
           const shouldClearStorage = (pathname === '/login' && !status) || 
                                    status === 'error' || 
-                                   status === 'success' ||
                                    (pathname === '/' && status === 'error')
           
           if (state) {
@@ -242,6 +240,15 @@ export const useAuthStore = create<AuthState>()(
               state.loading = false
               state.hydrated = false
               state.error = null
+              return
+            }
+            
+            // For successful login with URL parameters, preserve state and let AuthProvider handle it
+            if (status === 'success') {
+              console.log('AuthStore: Success status detected, preserving state for AuthProvider processing')
+              // Just mark as hydrated, don't modify the state
+              state.loading = false
+              state.hydrated = true
               return
             }
             

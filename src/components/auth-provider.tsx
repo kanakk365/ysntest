@@ -21,8 +21,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Clear localStorage if:
     // 1. We're on the login page WITHOUT success status (regular login page)
     // 2. We have error status (failed login)
-    // 3. We have success status (new successful login - always clear old data)
-    if ((pathname === '/login' && !status) || status === 'error' || status === 'success') {
+    // DON'T clear for success status here - handle it in the main processing logic
+    if ((pathname === '/login' && !status) || status === 'error') {
       localStorage.clear()
       console.log('AuthProvider: Cleared localStorage for fresh login state, status:', status || 'none')
     }
@@ -67,20 +67,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     if (status === 'success' && dataParam) {
       try {        
-        // Always clear localStorage first when processing a new successful login
-        // This ensures we don't have stale data from previous sessions
-        localStorage.clear()
-        console.log('AuthProvider: Cleared localStorage before processing successful login')
-        
-        // Decode the URL-encoded data
+        // Decode the URL-encoded data first
         const decodedData = decodeURIComponent(dataParam)
         const userData = JSON.parse(decodedData)
         
         // Validate the user data structure
         if (userData.token && userData.id && userData.name && userData.email && userData.user_type) {
-          console.log('AuthProvider: Setting user in auth store', userData)
+          console.log('AuthProvider: Valid user data received, processing login', userData)
           
-          // Set the user in the auth store (regardless of current authentication state)
+          // Clear only the auth storage key to remove old user data, but preserve other localStorage items
+          // This ensures we don't interfere with other parts of the app while clearing stale auth data
+          localStorage.removeItem('ysn-auth-storage')
+          console.log('AuthProvider: Cleared old auth data before setting new user')
+          
+          // Set the user in the auth store
           setUser({
             id: userData.id,
             token: userData.token,
@@ -93,19 +93,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           // Add a delay to ensure the state is properly set and persisted
           setTimeout(() => {
-            console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
-            // Clear the URL parameters by redirecting to the appropriate dashboard
-            if (userData.user_type === 9) {
-              // Super Admin
-              router.replace('/dashboard')
-            } else if (userData.user_type === 3) {
-              // Coach
-              router.replace('/dashboard/coach')
+            // Verify the auth state was updated
+            const currentState = useAuthStore.getState()
+            console.log('AuthProvider: Verifying auth state before redirect:', {
+              isAuthenticated: currentState.isAuthenticated,
+              hasUser: !!currentState.user,
+              userType: currentState.user?.user_type
+            })
+            
+            if (currentState.isAuthenticated && currentState.user) {
+              console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
+              // Clear the URL parameters by redirecting to the appropriate dashboard
+              if (userData.user_type === 9) {
+                // Super Admin
+                router.replace('/dashboard')
+              } else if (userData.user_type === 3) {
+                // Coach
+                router.replace('/dashboard/coach')
+              } else {
+                // Unknown user type, redirect to login
+                router.replace('/login')
+              }
             } else {
-              // Unknown user type, redirect to login
-              router.replace('/login')
+              console.error('AuthProvider: Auth state not properly set, retrying...')
+              // Retry setting the user
+              setUser({
+                id: userData.id,
+                token: userData.token,
+                name: userData.name,
+                email: userData.email,
+                user_type: userData.user_type
+              })
+              
+              setTimeout(() => {
+                if (userData.user_type === 9) {
+                  router.replace('/dashboard')
+                } else if (userData.user_type === 3) {
+                  router.replace('/dashboard/coach')
+                } else {
+                  router.replace('/login')
+                }
+              }, 1000)
             }
-          }, 500) // Reduced delay since we're more explicit about clearing
+          }, 800) // Increased delay to ensure proper state persistence
           return
         } else {
           console.error('Invalid user data structure:', userData)
@@ -121,7 +151,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Only handle normal authentication flow if we're not processing URL parameters
     // AND we're properly hydrated (to avoid redirecting during rehydration)
     if (!loading && hydrated && !searchParams.get('status')) {
-      console.log('AuthProvider: Normal auth flow check', { isAuthenticated, pathname, user })
+      console.log('AuthProvider: Normal auth flow check', { 
+        isAuthenticated, 
+        pathname, 
+        user: user ? { id: user.id, user_type: user.user_type, hasToken: !!user.token } : null,
+        loading,
+        hydrated
+      })
       
       // If not authenticated and not on login page, redirect to external login
       // BUT only if we're sure there's no user data (check both isAuthenticated and user)
