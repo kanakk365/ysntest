@@ -14,6 +14,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isProcessingLogin, setIsProcessingLogin] = useState(false)
+  const [processedUrlParams, setProcessedUrlParams] = useState<string | null>(null)
 
   // Clear localStorage for specific scenarios to ensure fresh state
   useEffect(() => {
@@ -53,20 +54,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
       hydrated,
       user: user ? { id: user.id, hasToken: !!user.token, user_type: user.user_type } : null,
       pathname,
-      hasStatusParam: !!searchParams.get('status')
+      hasStatusParam: !!searchParams.get('status'),
+      isProcessingLogin
     })
+
+    // Don't run if we're still loading or not hydrated
+    if (loading || !hydrated) {
+      console.log('AuthProvider: Skipping useEffect - loading or not hydrated')
+      return
+    }
 
     // Handle login redirect with URL parameters
     const status = searchParams.get('status')
     const dataParam = searchParams.get('data')
 
     // Clear authentication state only for error status to ensure clean state
-    if (status === 'error') {
+    if (status === 'error' && !isProcessingLogin) {
       localStorage.clear()
       console.log('AuthProvider: Cleared localStorage due to error status')
+      return // Early return to prevent further processing
     }
 
-    if (status === 'success' && dataParam) {
+    if (status === 'success' && dataParam && !isProcessingLogin) {
+      // Create a unique key for this URL parameter set to prevent duplicate processing
+      const urlParamKey = `${status}-${dataParam.substring(0, 50)}`
+      
+      if (processedUrlParams === urlParamKey) {
+        console.log('AuthProvider: URL parameters already processed, skipping')
+        return
+      }
+      
+      setProcessedUrlParams(urlParamKey)
       setIsProcessingLogin(true) // Set flag to prevent normal auth flow
       
       try {        
@@ -104,8 +122,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
               userType: currentState.user?.user_type
             })
             
-            setIsProcessingLogin(false) // Clear flag before redirect
-            
             if (currentState.isAuthenticated && currentState.user) {
               console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
               // Clear the URL parameters by redirecting to the appropriate dashboard
@@ -131,7 +147,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
               })
               
               setTimeout(() => {
-                setIsProcessingLogin(false) // Clear flag
                 if (userData.user_type === 9) {
                   router.replace('/dashboard')
                 } else if (userData.user_type === 3) {
@@ -141,13 +156,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 }
               }, 1000)
             }
+            
+            // Always clear the processing flag after redirect
+            setIsProcessingLogin(false)
           }, 800) // Increased delay to ensure proper state persistence
           return
         } else {
           console.error('Invalid user data structure:', userData)
+          setIsProcessingLogin(false)
         }
       } catch (error) {
         console.error('Error parsing login data:', error)
+        setIsProcessingLogin(false)
         // If there's an error parsing the data, redirect to external login
         window.location.href = 'https://beta.ysn.tv/login'
         return
@@ -157,9 +177,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Only handle normal authentication flow if we're not processing URL parameters
     // AND we're properly hydrated (to avoid redirecting during rehydration)
     // AND we're not currently processing a login
-    const hasStatusParam = searchParams.get('status')
+    const hasStatusParam = !!searchParams.get('status')
     
-    if (!loading && hydrated && !hasStatusParam && !isProcessingLogin) {
+    if (!hasStatusParam && !isProcessingLogin) {
       console.log('AuthProvider: Normal auth flow check', { 
         isAuthenticated, 
         pathname, 
@@ -177,7 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return
       }
 
-      // If authenticated, redirect based on user type
+      // If authenticated, redirect based on user type (but only if we're not already on the right page)
       if (isAuthenticated && user) {
         console.log('AuthProvider: User authenticated, checking user type and pathname', { user_type: user.user_type, pathname })
         if (user.user_type === 9 && pathname !== "/dashboard") {
@@ -193,7 +213,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else if (isProcessingLogin) {
       console.log('AuthProvider: Skipping normal auth flow - currently processing login')
     }
-  }, [isAuthenticated, loading, hydrated, user, router, pathname, searchParams, setUser, isProcessingLogin])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, hydrated, pathname, searchParams, isProcessingLogin, processedUrlParams]) // Removed user, isAuthenticated, setUser from deps to prevent loops
+
+  // Reset processed URL params when search params change
+  useEffect(() => {
+    if (!searchParams.get('status')) {
+      setProcessedUrlParams(null)
+      setIsProcessingLogin(false)
+    }
+  }, [searchParams])
 
   // Show loading screen while authentication state is being determined
   if (loading || !hydrated) {

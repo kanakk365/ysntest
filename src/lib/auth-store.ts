@@ -238,7 +238,7 @@ export const useAuthStore = create<AuthState>()(
               state.user = null
               state.isAuthenticated = false
               state.loading = false
-              state.hydrated = false
+              state.hydrated = true // Set hydrated directly
               state.error = null
               return
             }
@@ -258,7 +258,9 @@ export const useAuthStore = create<AuthState>()(
               state.isAuthenticated = true
             }
             
-            state.setHydrated()
+            // Set hydrated directly instead of calling setHydrated to prevent loops
+            state.loading = false
+            state.hydrated = true
             console.log('AuthStore: State hydrated successfully', { 
               hasUser: !!state.user, 
               isAuthenticated: state.isAuthenticated 

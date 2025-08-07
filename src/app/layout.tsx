@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
+import { ErrorBoundary, AuthErrorFallback } from "@/components/error-boundary";
 import { Suspense } from "react";
 
 const geistSans = Geist({
@@ -42,9 +43,11 @@ export default function RootLayout({
               <div className="text-foreground">Loading...</div>
             </div>
           }>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            <ErrorBoundary fallback={AuthErrorFallback}>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </ErrorBoundary>
           </Suspense>
           <Toaster />
         </ThemeProvider>
