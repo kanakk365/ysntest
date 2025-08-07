@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useAuthStore } from "@/lib/auth-store"
+import { useState, useEffect } from "react"
+import { useAuthStore, clearAuthStorage } from "@/lib/auth-store"
 import { Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
@@ -11,6 +11,11 @@ export default function LoginPage() {
   const [validationError, setValidationError] = useState("")
   
   const { login, loading, error, clearError } = useAuthStore()
+
+  // Clear auth storage when login page mounts to prevent rehydration issues
+  useEffect(() => {
+    clearAuthStorage()
+  }, [])
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

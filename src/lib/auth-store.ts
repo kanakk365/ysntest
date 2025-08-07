@@ -38,6 +38,16 @@ const clearAllLocalStorage = () => {
   }
 }
 
+// Function to clear localStorage before auth store rehydrates
+export const clearAuthStorage = () => {
+  try {
+    localStorage.removeItem('ysn-auth-storage')
+    console.log('AuthStore: Auth storage cleared before rehydration')
+  } catch (error) {
+    console.warn('AuthStore: Error clearing auth storage:', error)
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -182,13 +192,30 @@ export const useAuthStore = create<AuthState>()(
       skipHydration: false,
       onRehydrateStorage: () => (state) => {
         console.log('AuthStore: Rehydrating state', state)
-        // Set loading to false after hydration is complete
+        
+        // Check if we're on the login page
+        const isOnLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login'
+        
         if (state) {
+          // If we're on the login page and there's stored authentication data, clear it
+          if (isOnLoginPage && state.user && state.isAuthenticated) {
+            console.log('AuthStore: On login page with stored auth data, clearing localStorage')
+            clearAllLocalStorage()
+            // Reset the state
+            state.user = null
+            state.isAuthenticated = false
+            state.loading = false
+            state.hydrated = false
+            state.error = null
+            return
+          }
+          
           // Ensure isAuthenticated is properly set based on user data
           if (state.user && state.user.token && !state.isAuthenticated) {
             console.log('AuthStore: User data found but not authenticated, fixing state')
             state.isAuthenticated = true
           }
+          
           state.setHydrated()
           console.log('AuthStore: State hydrated successfully', { 
             hasUser: !!state.user, 
