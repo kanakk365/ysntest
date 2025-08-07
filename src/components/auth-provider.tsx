@@ -14,20 +14,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // Immediately clear localStorage if on login page or if we have URL parameters indicating a new login
+  // Clear localStorage for specific scenarios to ensure fresh state
   useEffect(() => {
     const status = searchParams.get('status')
-    const dataParam = searchParams.get('data')
     
     // Clear localStorage if:
-    // 1. We're on the login page
-    // 2. We have URL parameters indicating a new login attempt (success or error)
-    // 3. We're on the root path with login parameters
-    if (pathname === '/login' || 
-        (status && dataParam) || 
-        (pathname === '/' && status)) {
+    // 1. We're on the login page WITHOUT success status (regular login page)
+    // 2. We have error status (failed login)
+    // 3. We have success status (new successful login - always clear old data)
+    if ((pathname === '/login' && !status) || status === 'error' || status === 'success') {
       localStorage.clear()
-      console.log('AuthProvider: Cleared localStorage due to login page or URL parameters')
+      console.log('AuthProvider: Cleared localStorage for fresh login state, status:', status || 'none')
     }
   }, [pathname, searchParams])
 
@@ -62,14 +59,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const status = searchParams.get('status')
     const dataParam = searchParams.get('data')
 
-    // Clear authentication state for both error and success status to ensure clean state
-    if (status === 'error' || status === 'success') {
+    // Clear authentication state only for error status to ensure clean state
+    if (status === 'error') {
       localStorage.clear()
-      console.log('AuthProvider: Cleared localStorage due to login status:', status)
+      console.log('AuthProvider: Cleared localStorage due to error status')
     }
 
     if (status === 'success' && dataParam) {
       try {        
+        // Always clear localStorage first when processing a new successful login
+        // This ensures we don't have stale data from previous sessions
+        localStorage.clear()
+        console.log('AuthProvider: Cleared localStorage before processing successful login')
+        
         // Decode the URL-encoded data
         const decodedData = decodeURIComponent(dataParam)
         const userData = JSON.parse(decodedData)
@@ -89,13 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           console.log('AuthProvider: User set, waiting before redirect...')
           
-          // Verify the data was persisted to localStorage
-          setTimeout(() => {
-            const stored = localStorage.getItem('ysn-auth-storage')
-            console.log('AuthProvider: Checking localStorage after setUser:', stored ? 'Data found' : 'No data found')
-          }, 100)
-          
-          // Add a longer delay to ensure the state is properly set and persisted
+          // Add a delay to ensure the state is properly set and persisted
           setTimeout(() => {
             console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
             // Clear the URL parameters by redirecting to the appropriate dashboard
@@ -109,7 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               // Unknown user type, redirect to login
               router.replace('/login')
             }
-          }, 1000) // Increased delay to ensure proper state persistence
+          }, 500) // Reduced delay since we're more explicit about clearing
           return
         } else {
           console.error('Invalid user data structure:', userData)

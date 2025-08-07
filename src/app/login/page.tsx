@@ -2,26 +2,33 @@
 
 import { useState, useEffect } from "react"
 import { useAuthStore, clearAuthStorage } from "@/lib/auth-store"
+import { useSearchParams } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
-
-// Immediately clear localStorage when this module is loaded
-if (typeof window !== 'undefined') {
-  localStorage.clear()
-  console.log('LoginPage: Immediate localStorage clearing on module load')
-}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [validationError, setValidationError] = useState("")
+  const searchParams = useSearchParams()
   
   const { login, loading, error, clearError } = useAuthStore()
 
-  // Clear auth storage when login page mounts to prevent rehydration issues
+  // Clear auth storage and localStorage when needed
   useEffect(() => {
-    clearAuthStorage()
-  }, [])
+    const status = searchParams.get('status')
+    
+    // Always clear storage for fresh state, but let AuthProvider handle successful logins
+    if (!status || status === 'error') {
+      clearAuthStorage()
+      // Clear localStorage for fresh login attempts or errors
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        console.log('LoginPage: Cleared localStorage for fresh login state')
+      }
+    }
+    // For successful logins, let AuthProvider handle the clearing and processing
+  }, [searchParams])
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
