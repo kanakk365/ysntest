@@ -51,7 +51,7 @@ export function CoachSidebar() {
 
   const handleLogout = async () => {
     await logout()
-    window.location.href = "https://beta.ysn.tv/login"
+    router.push('/')
   }
 
   return (

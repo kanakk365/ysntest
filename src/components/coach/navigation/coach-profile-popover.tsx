@@ -27,9 +27,8 @@ export function CoachProfilePopover() {
   }
 
   const handleLogout = async () => {
-    // Add logout logic here
-    logout()
-    window.location.href = "https://beta.ysn.tv/login"
+    await logout()
+    router.push('/')
   }
 
   const toggleTheme = () => {

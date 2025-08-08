@@ -135,7 +135,7 @@ export default function Navbar() {
   const DesktopAuth = () => (
     <div className="flex items-center gap-4">
       <Link
-        href="https://beta.ysn.tv/login"
+        href="/login"
         className="text-white"
       >
         Log In
@@ -144,7 +144,7 @@ export default function Navbar() {
         |
       </div>
       <Link
-        href="https://beta.ysn.tv/register"
+        href="/login"
         className="text-white"
       >
         Sign Up

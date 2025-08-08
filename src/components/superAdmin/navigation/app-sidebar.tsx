@@ -60,11 +60,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   const handleLogout = async () => {
     await logout()
-    window.location.href = "https://beta.ysn.tv/login"
+    router.push('/')
   }
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" className="w-60 md:w-72 shrink-0" {...props}>
       <SidebarContent className="px-4 py-2">
         <NavMain items={data.navMain} />
       </SidebarContent>

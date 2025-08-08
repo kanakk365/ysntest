@@ -5,30 +5,34 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
 import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
-import { Sidebar } from "@/components/ui/sidebar-zustand"
-import { useSidebarMobileSync } from "@/lib/sidebar-store"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 
-export default function Dashboard() {
+export default function DashboardPage() {
   const { user, isAuthenticated, loading, hydrated } = useAuthStore()
   const router = useRouter()
-  
-  useSidebarMobileSync()
 
   useEffect(() => {
-    // Only handle redirects after the store is properly hydrated
-    if (!loading && hydrated) {
-      if (!isAuthenticated && !user) {
-        router.push("/login")
-      } else if (user?.user_type === 3) {
-        router.push("/dashboard/coach")
-      } else if (user?.user_type === 9) {
-        // Super admin stays on dashboard
+    // If not authenticated, redirect to landing page
+    if (!loading && hydrated && (!isAuthenticated || !user)) {
+      router.push('/')
+      return
+    }
+
+    // If authenticated but not super admin, redirect to appropriate page
+    if (!loading && hydrated && isAuthenticated && user) {
+      if (user.user_type === 3) {
+        // Coach - redirect to coach dashboard
+        router.push('/dashboard/coach')
+        return
+      } else if (user.user_type !== 9) {
+        // Not super admin - redirect to landing page
+        router.push('/')
         return
       }
     }
-  }, [isAuthenticated, loading, hydrated, user, router])
+  }, [user, isAuthenticated, loading, hydrated, router])
 
+  // Show loading while authentication state is being determined
   if (loading || !hydrated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -37,22 +41,28 @@ export default function Dashboard() {
     )
   }
 
-  if (!isAuthenticated && !user) {
+  // If not authenticated or not super admin, show loading while redirecting
+  if (!isAuthenticated || !user || user.user_type !== 9) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Redirecting to login...</div>
+        <div className="text-foreground">Redirecting...</div>
       </div>
     )
   }
 
+  // Show super admin dashboard
   return (
-    <div className="flex h-screen bg-background">
-      <AppSidebar className="w-64" />
-      <div className="flex-1 flex flex-col">
+    <div className="h-screen bg-background flex">
+      <AppSidebar />
+      <div className="flex-1 flex flex-col min-w-0">
         <SiteHeader />
-        <main className="flex-1 overflow-auto">
-          <DashboardTabs />
-        </main>
+        <div className="flex-1 overflow-auto">
+          <div className="@container/main">
+            <div className="px-4 lg:px-6 py-4">
+              <DashboardTabs />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

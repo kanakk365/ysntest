@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -61,12 +62,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
 // Custom error fallback for auth-related errors
 export function AuthErrorFallback({ resetError }: { error?: Error; resetError: () => void }) {
+  const router = useRouter()
+
   const handleResetAuth = () => {
     // Clear all localStorage and reset
     localStorage.clear()
     resetError()
-    // Redirect to external login
-    window.location.href = 'https://beta.ysn.tv/login'
+    // Redirect to landing page
+    router.push('/')
   }
 
   return (
@@ -87,7 +90,7 @@ export function AuthErrorFallback({ resetError }: { error?: Error; resetError: (
             onClick={handleResetAuth}
             className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
           >
-            Reset & Login
+            Reset & Go Home
           </button>
         </div>
       </div>

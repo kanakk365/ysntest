@@ -1,44 +1,51 @@
 "use client"
 
+import { useAuthStore } from "@/lib/auth-store"
+import { LandingPage } from "@/components/LandingPage/landing-page"
 import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
 import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
-import { DashboardProvider } from "@/contexts/dashboard-context"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
 
 export default function Home() {
-  // Authentication is handled by AuthProvider in layout.tsx
-  // This component will only render for authenticated super admin users
-  return (
-    <DashboardProvider>
-      <div className="h-screen bg-background">
-        <SidebarProvider
-          className="flex h-full"
-          style={
-            {
-              "--sidebar-width": "calc(var(--spacing) * 72)",
-              "--header-height": "calc(var(--spacing) * 12)",
-            } as React.CSSProperties
-          }
-        >
-          <div className="flex h-full w-full">
-            <AppSidebar variant="inset" />
-            <SidebarInset className="flex-1 h-full flex flex-col overflow-hidden">
-              <SiteHeader />
-              <div className="flex-1 overflow-auto">
-                <div className="@container/main">
-                  <div className="px-4 lg:px-6 py-4">
-                    <DashboardTabs />
-                  </div>
-                </div>
-              </div>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
+  const { user, isAuthenticated, loading, hydrated } = useAuthStore()
+
+  if (loading || !hydrated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Loading...</div>
       </div>
-    </DashboardProvider>
-  );
+    )
+  }
+
+  if (!isAuthenticated || !user) {
+    return <LandingPage />
+  }
+
+  if (user.user_type === 9) {
+    return (
+      <div className="h-screen bg-background flex">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <SiteHeader />
+          <div className="flex-1 overflow-auto">
+            <div className="@container/main">
+              <div className="px-4 lg:px-6 py-4">
+                <DashboardTabs />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (user.user_type === 3) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground">Redirecting to coach dashboard...</div>
+      </div>
+    )
+  }
+
+  return <LandingPage />
 }

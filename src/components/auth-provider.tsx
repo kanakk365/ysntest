@@ -132,8 +132,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 // Coach
                 router.replace('/dashboard/coach')
               } else {
-                // Unknown user type, redirect to login
-                router.replace('/login')
+                // Unknown user type, redirect to landing page
+                router.replace('/')
               }
             } else {
               console.error('AuthProvider: Auth state not properly set, retrying...')
@@ -152,7 +152,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 } else if (userData.user_type === 3) {
                   router.replace('/dashboard/coach')
                 } else {
-                  router.replace('/login')
+                  router.replace('/')
                 }
               }, 1000)
             }
@@ -165,13 +165,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.error('Invalid user data structure:', userData)
           setIsProcessingLogin(false)
         }
-      } catch (error) {
-        console.error('Error parsing login data:', error)
-        setIsProcessingLogin(false)
-        // If there's an error parsing the data, redirect to external login
-        window.location.href = 'https://beta.ysn.tv/login'
-        return
-      }
+              } catch (error) {
+          console.error('Error parsing login data:', error)
+          setIsProcessingLogin(false)
+          // If there's an error parsing the data, redirect to landing page
+          router.push('/')
+          return
+        }
     }
 
     // Only handle normal authentication flow if we're not processing URL parameters
@@ -189,14 +189,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isProcessingLogin
       })
       
-      // If not authenticated and not on login page, redirect to external login
-      // BUT only if we're sure there's no user data (check both isAuthenticated and user)
-      if (!isAuthenticated && !user && pathname !== "/login") {
-        console.log('AuthProvider: Not authenticated and no user data, redirecting to external login')
-        window.location.href = "https://beta.ysn.tv/login"
-        return
-      }
-
       // If authenticated, redirect based on user type (but only if we're not already on the right page)
       if (isAuthenticated && user) {
         console.log('AuthProvider: User authenticated, checking user type and pathname', { user_type: user.user_type, pathname })
@@ -249,7 +241,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return <>{children}</>
   }
 
-  // If authenticated, show the appropriate dashboard
+  // If authenticated and on dashboard pages, show the appropriate dashboard
   if (isAuthenticated && user) {
     console.log('AuthProvider: Rendering check', { user_type: user.user_type, pathname, isAuthenticated, hasUser: !!user })
     if ((user.user_type === 9 && pathname === "/dashboard") || 
@@ -267,8 +259,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // If we reach here, user is not authenticated and not on login page
-  console.log('AuthProvider: Fallback - showing loading while determining auth state', { 
+  // For all other cases (including unauthenticated users on main page), render children
+  console.log('AuthProvider: Rendering children for all other cases', { 
     isAuthenticated, 
     hasUser: !!user, 
     pathname, 
@@ -276,10 +268,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     hydrated 
   })
   
-  // Show loading while redirecting or determining state
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-foreground">Loading...</div>
-    </div>
-  )
+  return <>{children}</>
 } 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAuthStore, clearAuthStorage } from "@/lib/auth-store"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [validationError, setValidationError] = useState("")
   const searchParams = useSearchParams()
+  const router = useRouter()
   
   const { login, loading, error, clearError } = useAuthStore()
 
@@ -52,7 +53,18 @@ export default function LoginPage() {
     const success = await login(email, password)
     
     if (success) {
-      // The AuthProvider will handle the redirect based on user type
+      // Get the current user from the store
+      const currentUser = useAuthStore.getState().user
+      
+      // Check if user is authorized (super admin or coach)
+      if (currentUser && (currentUser.user_type === 9 || currentUser.user_type === 3)) {
+        // User is authorized, AuthProvider will handle the redirect
+        console.log('LoginPage: User authorized, AuthProvider will redirect')
+      } else {
+        // User is not authorized, redirect back to landing page
+        console.log('LoginPage: User not authorized, redirecting to landing page')
+        router.push('/')
+      }
     }
   }
 
@@ -113,17 +125,17 @@ export default function LoginPage() {
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
-            {/* <div className="w-full text-center mt-2">
+            <div className="w-full text-center mt-2">
               <span className="text-xs text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <a
-                  href="#"
+                Don&apos;t have access?{" "}
+                <button
+                  onClick={() => router.push('/')}
                   className="underline text-foreground/80 hover:text-foreground"
                 >
-                  Sign up, it&apos;s free!
-                </a>
+                  Return to home
+                </button>
               </span>
-            </div> */}
+            </div>
           </div>
         </div>
       </div>
