@@ -36,9 +36,9 @@ export default function Navbar() {
   const navigationItems = [
     { name: 'Home', url: '/', icon: Home },
     { name: 'Organizations', url: '/organization', icon: Building2 },
-    { name: 'About Us', url: '/about-us', icon: Info },
-    { name: 'Sponsors', url: '/sponsor', icon: Users },
-    { name: 'News', url: '/news', icon: Newspaper },
+    { name: 'About Us', url: '/aboutus', icon: Info },
+    { name: 'Sponsors', url: '/sponsors', icon: Users },
+    { name: 'Advertising', url: '/advertise', icon: Newspaper },
   ]
 
   const DesktopSearch = () => {
@@ -222,7 +222,7 @@ export default function Navbar() {
       {/* Desktop Navigation */}
       <div className="w-[40rem] relative flex items-center justify-center ml-10 z-40">
         <div 
-          className="absolute  bg-black top-[-7.5rem] inset-0 h-[15rem] [transform:perspective(500px)_rotateX(-60deg)] rounded-b-[2rem]"
+          className="absolute bg-black top-[-7.5rem] inset-0 h-[15rem] [transform:perspective(660px)_rotateX(-60deg)] rounded-b-[2rem]"
           style={{
             boxShadow: '0px -25px 50px 22px rgba(0, 0, 0, 0.8), 0 0 0 3px rgba(61, 22, 124, 1), 0 10px 15px rgba(55, 5, 220, 0.9)'
           }}

@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import React, { useRef, useState } from "react"
-import { motion, useInView } from "motion/react"
-import Image from "next/image"
-import { Gamepad2, Radio, Smartphone, Video, Users } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useTheme } from "next-themes"
+import React, { useRef, useState } from "react";
+import { motion, useInView } from "motion/react";
+import Image from "next/image";
+import { Gamepad2, Radio, Smartphone, Video, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 export default function About() {
-  const sectionRef = useRef<HTMLDivElement | null>(null)
-  const isInView = useInView(sectionRef, { once: true, amount: 0.2 })
-  const [activeTab, setActiveTab] = useState(0)
-  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
-  const { theme } = useTheme()
-  const isLightTheme = theme === "light"
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+  const [activeTab, setActiveTab] = useState(0);
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const { theme } = useTheme();
+  const isLightTheme = theme === "light";
 
   const websiteUrls = [
     "https://battlelounge.io/",
@@ -21,7 +21,7 @@ export default function About() {
     "https://www.playerhub.io/",
     "https://www.playerhub.io/",
     "https://www.playerhub.io/",
-  ]
+  ];
 
   const customGradients = [
     "from-[#b55fc2] to-[#7b53c6]",
@@ -29,7 +29,7 @@ export default function About() {
     "from-[#48c4bc] to-[#4755bb]",
     "from-[#7b53c6] to-[#0037c0]",
     "from-[#b55fc2] to-[#48c4bc]",
-  ]
+  ];
 
   const technologyItems = [
     {
@@ -95,40 +95,47 @@ export default function About() {
       points: [
         {
           title: "Athlete Profiles & Stats",
-          description: "Track performance, growth, and milestones across seasons with rich visualizations.",
+          description:
+            "Track performance, growth, and milestones across seasons with rich visualizations.",
           image: "/landing/playhub-profile-and-status-2.webp",
         },
         {
           title: "Event & Tournament Management",
-          description: "Register, schedule, and stay updated on upcoming events and showcases.",
+          description:
+            "Register, schedule, and stay updated on upcoming events and showcases.",
           image: "/landing/playhub-2.webp",
         },
         {
           title: "Recruitment & Gear Hub",
-          description: "Showcase highlights, connect with scouts, and purchase sport-specific gear.",
+          description:
+            "Showcase highlights, connect with scouts, and purchase sport-specific gear.",
           image: "/landing/playerhub-analytics.webp",
         },
       ],
     },
     {
       title: "Rosters",
-      description: "Professional video production service creating highlight reels and promotional content for athletes.",
+      description:
+        "Professional video production service creating highlight reels and promotional content for athletes.",
       icon: <Video className="w-6 h-6" />,
       color: customGradients[3],
       points: [
         {
           title: "Recruitment Videos",
-          description: "Professional recruitment videos designed to showcase athlete skills for scouts.",
+          description:
+            "Professional recruitment videos designed to showcase athlete skills for scouts.",
           image: "/landing/myreels-football.webp",
         },
         {
           title: "Social Media Content",
-          description: "Optimized content for social media platforms to build athlete personal brands.",
+          description:
+            "Optimized content for social media platforms to build athlete personal brands.",
           image: "/landing/playhub-2.webp",
         },
         {
           title: "Game Highlights",
-          description: "Cinematic game highlight compilations with polished editing and music.",
+          description:
+            "Cinematic game highlight compilations with polished editing and music.",
           image: "/landing/player-dashboard.webp",
         },
       ],
@@ -142,41 +149,44 @@ export default function About() {
       points: [
         {
           title: "AI Movement Analysis",
-          description: "Breaks down form and technique using video data and pro benchmarks.",
+          description:
+            "Breaks down form and technique using video data and pro benchmarks.",
           image: "/landing/connected-athlete.webp",
         },
         {
           title: "Injury Risk Detection",
-          description: "Flags potential issues before they become injuries via movement pattern analysis.",
+          description:
+            "Flags potential issues before they become injuries via movement pattern analysis.",
           image: "/landing/connected-athlete-dashboard.webp",
         },
         {
           title: "Integrated Recovery Loop",
-          description: "Syncs with therapists and health systems to deliver personalized improvement plans.",
+          description:
+            "Syncs with therapists and health systems to deliver personalized improvement plans.",
           image: "/landing/connected-athlete-profile.webp",
         },
       ],
     },
-  ]
+  ];
 
   const getCurrentImage = () => {
     if (hoveredPoint !== null) {
-      return technologyItems[activeTab].points[hoveredPoint].image
+      return technologyItems[activeTab].points[hoveredPoint].image;
     }
-    return technologyItems[activeTab].points[0].image
-  }
+    return technologyItems[activeTab].points[0].image;
+  };
 
   const getCurrentPointInfo = () => {
     if (hoveredPoint !== null) {
-      return technologyItems[activeTab].points[hoveredPoint]
+      return technologyItems[activeTab].points[hoveredPoint];
     }
-    return technologyItems[activeTab].points[0]
-  }
+    return technologyItems[activeTab].points[0];
+  };
 
   return (
     <section
       id="sports-technology"
-      className=" bg-black py-16 md:py-20  text-foreground"
+      className=" bg-black py-16 md:py-10  text-foreground"
       ref={sectionRef}
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -186,13 +196,19 @@ export default function About() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-4xl md:text-4xl font-bold mb-4">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#b55fc2] to-[#0037c0]">
               Leading Global Youth Sports Technology at YSN
             </span>
           </h2>
-          <p className={cn("text-lg md:text-xl max-w-3xl mx-auto", isLightTheme ? "text-gray-600" : "text-gray-300")}> 
-            Cutting-edge digital platforms designed to enhance the youth sports experience, provide exposure, and develop athletes.
+          <p
+            className={cn(
+              "text-lg md:text-lg max-w-3xl mx-auto",
+              isLightTheme ? "text-gray-600" : "text-gray-300"
+            )}
+          >
+            Cutting-edge digital platforms designed to enhance the youth sports
+            experience, provide exposure, and develop athletes.
           </p>
         </motion.div>
 
@@ -207,8 +223,8 @@ export default function About() {
             <button
               key={index}
               onClick={() => {
-                setActiveTab(index)
-                setHoveredPoint(null)
+                setActiveTab(index);
+                setHoveredPoint(null);
               }}
               className={cn(
                 "flex items-center gap-3 px-5 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold transition-all duration-300 border",
@@ -216,11 +232,22 @@ export default function About() {
                 activeTab === index
                   ? `bg-gradient-to-r ${item.color} text-white border-transparent shadow-md`
                   : isLightTheme
-                    ? "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:shadow-sm"
-                    : "bg-gray-900/40 text-gray-300 border-gray-700 hover:border-gray-600 hover:bg-gray-800/50",
+                  ? "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                  : "bg-gray-900/40 text-gray-300 border-gray-700 hover:border-gray-600 hover:bg-gray-800/50"
               )}
             >
-              <div className={cn("transition-colors duration-300", activeTab === index ? "text-white" : isLightTheme ? "text-gray-600" : "text-gray-400")}>{item.icon}</div>
+              <div
+                className={cn(
+                  "transition-colors duration-300",
+                  activeTab === index
+                    ? "text-white"
+                    : isLightTheme
+                    ? "text-gray-600"
+                    : "text-gray-400"
+                )}
+              >
+                {item.icon}
+              </div>
               <span className="text-sm md:text-base">{item.title}</span>
             </button>
           ))}
@@ -235,12 +262,27 @@ export default function About() {
               transition={{ duration: 0.5, delay: 0.15 }}
               className="mb-4"
             >
-              <h3 className={cn("text-2xl font-bold mb-2", isLightTheme ? "text-gray-900" : "text-white")}> 
-                <a href={websiteUrls[activeTab]} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              <h3
+                className={cn(
+                  "text-2xl font-bold mb-2",
+                  isLightTheme ? "text-gray-900" : "text-white"
+                )}
+              >
+                <a
+                  href={websiteUrls[activeTab]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
                   {technologyItems[activeTab].title}
                 </a>
               </h3>
-              <p className={cn("text-base md:text-lg", isLightTheme ? "text-gray-600" : "text-gray-300")}>
+              <p
+                className={cn(
+                  "text-base md:text-lg",
+                  isLightTheme ? "text-gray-600" : "text-gray-300"
+                )}
+              >
                 {technologyItems[activeTab].description}
               </p>
             </motion.div>
@@ -256,19 +298,45 @@ export default function About() {
                     "p-4 rounded-xl cursor-pointer transition-all duration-300 border",
                     isLightTheme
                       ? "bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-sm"
-                      : "bg-gray-900/30 border-gray-800 hover:border-gray-700 hover:bg-gray-800/50",
+                      : "bg-gray-900/30 border-gray-800 hover:border-gray-700 hover:bg-gray-800/50"
                   )}
                   onMouseEnter={() => setHoveredPoint(index)}
                   onMouseLeave={() => setHoveredPoint(null)}
                 >
-                  <h4 className={cn("font-semibold mb-2", isLightTheme ? "text-gray-900" : "text-white")}>
-                    <a href={websiteUrls[activeTab]} target="_blank" rel="noopener noreferrer" className="hover:underline" onClick={(e) => e.stopPropagation()}>
+                  <h4
+                    className={cn(
+                      "font-semibold mb-2",
+                      isLightTheme ? "text-gray-900" : "text-white"
+                    )}
+                  >
+                    <a
+                      href={websiteUrls[activeTab]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {point.title}
                     </a>
                   </h4>
-                  <p className={cn("text-sm", isLightTheme ? "text-gray-600" : "text-gray-300")}>{point.description}</p>
+                  <p
+                    className={cn(
+                      "text-sm",
+                      isLightTheme ? "text-gray-600" : "text-gray-300"
+                    )}
+                  >
+                    {point.description}
+                  </p>
                   {hoveredPoint === index && (
-                    <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.4 }} className={cn("h-1 mt-3 rounded-full bg-gradient-to-r", technologyItems[activeTab].color)} />
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 0.4 }}
+                      className={cn(
+                        "h-1 mt-3 rounded-full bg-gradient-to-r",
+                        technologyItems[activeTab].color
+                      )}
+                    />
                   )}
                 </motion.div>
               ))}
@@ -299,7 +367,5 @@ export default function About() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-
-
