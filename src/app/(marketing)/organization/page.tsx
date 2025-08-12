@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import axios from "axios"
 import Link from "next/link"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
@@ -25,21 +26,33 @@ export default function OrgPage() {
   const [pageSize, setPageSize] = useState<number>(pageSizeOptions[0])
   const [searchQuery, setSearchQuery] = useState<string>("")
 
-  // Replace with real data when available
-  const [organizationData] = useState<Organization[]>([
-    {
-      orgz_name: "Metro Youth FC",
-      orgz_slug_name: "metro-youth-fc",
-      orgz_logo: "/ysnlogo.webp",
-      player_count: 42,
-    },
-    {
-      orgz_name: "River City United",
-      orgz_slug_name: "river-city-united",
-      orgz_logo: "/ysnlogo.webp",
-      player_count: 28,
-    },
-  ])
+  const [organizationData, setOrganizationData] = useState<Organization[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchOrganizations = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const { data } = await axios.get<{ status: boolean; data: Organization[] }>(
+          "https://beta.ysn.tv/api/organizations"
+        )
+        if (isMounted && data?.status && Array.isArray(data.data)) {
+          setOrganizationData(data.data)
+        }
+      } catch {
+        if (isMounted) setError("Failed to load organizations")
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    }
+    fetchOrganizations()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const filteredOrganization = useMemo(() => {
     if (!searchQuery) return organizationData
@@ -80,7 +93,7 @@ export default function OrgPage() {
 
   return (
     <div className="bg-black text-white">
-      <div className="relative py-2 md:px-6 mx-[5%] z-10 overflow-hidden" style={{ fontFamily: "Inter" }}>
+      <div className="relative py-2 md:px-6 mx-[5%] z-10 overflow-hidden">
         <div className="relative flex flex-col md:flex-row items-end gap-3 border-b border-[#1C1A26] md:px-0 pt-[250px] md:pt-[185px]" style={{ justifyContent: "space-between" }}>
           <div className="flex items-center gap-3 mb-3">
             <h1 className="text-2xl">Organizations</h1>
@@ -114,14 +127,18 @@ export default function OrgPage() {
 
       <div className="bg-black text-white py-12 md:px-6 z-10">
         <div className="container m-auto flex" style={{ justifyContent: "center" }}>
-          {paginationData.length > 0 ? (
+          {isLoading ? (
+            <div className="flex mt-[200px] mb-[200px]">
+              <h2 className="text-center">Loading organizations...</h2>
+            </div>
+          ) : paginationData.length > 0 ? (
             <div className="flex flex-wrap justify-center items-center gap-12 2xl:gap-6">
               {paginationData.map((orgData, index) => (
                 <Link key={index} href={`/organization/${orgData.orgz_slug_name}`}>
                   <div className="mt-[100px] relative w-[310px] h-[190px] bg-gradient-to-b from-[#0f0b23d1] to-[#2a254596] rounded-2xl text-white flex flex-col items-center justify-end pb-6 shadow-lg">
                     <div className="absolute w-[226px] h-[130px] -top-[65px] overflow-hidden flex items-center justify-center">
                       <Image
-                        src={orgData.orgz_logo ? String(orgData.orgz_logo) : "/ysnlogo.webp"}
+                        src={orgData.orgz_logo ? String(orgData.orgz_logo).replace(/^http:\/\//, 'https://') : "/ysnlogo.webp"}
                         alt="Organization logo"
                         width={100}
                         height={120}
@@ -139,7 +156,7 @@ export default function OrgPage() {
             </div>
           ) : (
             <div className="flex mt-[200px] mb-[200px]">
-              <h2 className="text-center">No Organization Available</h2>
+              <h2 className="text-center">{error ?? "No Organization Available"}</h2>
             </div>
           )}
         </div>

@@ -2,7 +2,22 @@ import Image from "next/image"
 import Link from "next/link"
 import Blog from "@/components/LandingPage/Blog"
 import Contact from "@/components/LandingPage/Contact"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Megaphone, ShoppingBag, IdCard, Video, MessageSquare, Mic2 } from "lucide-react"
+import type { ReactNode } from "react"
+
+type FeatureItemProps = {
+  icon: ReactNode
+  text: string
+}
+
+function FeatureItem({ icon, text }: FeatureItemProps) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="mt-1">{icon}</div>
+      <p className="text-sm md:text-base text-white/80">{text}</p>
+    </div>
+  )
+}
 
 export default function AboutUsPage() {
   return (
@@ -48,41 +63,48 @@ export default function AboutUsPage() {
       </div>
 
       {/* Promise */}
-      <section className="relative z-10 text-center max-w-3xl pt-10 mx-auto pb-5">
-        <p className="md:text-lg leading-relaxed text-white" style={{ fontSize: "28.13px", lineHeight: "1.6" }}>
-          Enjoy a free, premium and immersive experience, for <br />live streamed events
+      <section className="relative mx-auto max-w-4xl px-6 py-12 text-center md:py-16">
+        <p className="text-2xl font-semibold leading-relaxed text-white md:text-[28px]">
+          Enjoy a free, premium, and immersive experience for
+          <br />
+          live-streamed events
         </p>
       </section>
 
-      {/* Features List (image + text per reference) */}
-      <section className="relative mt-[50px] text-justify z-10 max-w-7xl m-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 text-white text-[16px]">
-        <div>
-          <p className='flex items-center text-white/50 pb-8 md:pb-10 lg:pb-20'>
-            <Image src="/landing/about/Icon.webp" alt="icon" width={36} height={36} className="object-contain mr-3" />
-            Add local and organization advertiser content to your organization and team pages for additional revenue
-          </p>
-          <p className='flex items-center text-white/50 pb-8 md:pb-10 lg:pb-20'>
-            <Image src="/landing/about/Icon1.webp" alt="icon" width={36} height={36} className="object-contain mr-3" />
-            Showcase your merchandise during live streams to drive sales or get started with help from YSN’s vendor partners.
-          </p>
-          <p className='flex items-center text-white/50'>
-            <Image src="/landing/about/Icon2.webp" alt="icon" width={36} height={36} className="object-contain mr-3" />
-            Create player profiles to boost recruitment. Scouts and coaches can view “Game Reels” and access profiles directly during live games.
-          </p>
-        </div>
-        <div>
-          <p className='flex items-center text-white/50 pb-8 md:pb-10 lg:pb-20'>
-            <Image src="/landing/about/Icon3.webp" alt="icon" width={36} height={36} className="object-contain mr-3" />
-            Live stream home and away games
-          </p>
-          <p className='flex items-center text-white/50 pb-8 md:pb-10 lg:pb-20'>
-            <Image src="/landing/about/Icon4.webp" alt="icon" width={36} height={36} className="object-contain mr-3" />
-            Live chat option for more engaged experience
-          </p>
-          <p className='flex items-center text-white/50'>
-            <Image src="/landing/about/Icon5.webp" alt="icon" width={36} height={36} className="object-contain mr-3" />
-            Add excitement to your live streamed game by having one of the YSN broadcasters call your game
-          </p>
+      {/* Features Grid */}
+      <section aria-labelledby="features" className="relative px-6 pb-10 md:pb-16">
+        <h3 id="features" className="sr-only">
+          Platform Features
+        </h3>
+
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 text-white/85 md:grid-cols-2 lg:gap-10">
+          {/* Left column */}
+          <FeatureItem
+            icon={<Megaphone className="h-6 w-6 text-purple-300" aria-hidden="true" />}
+            text="Add local and organization advertiser content to your organization and team pages for additional revenue."
+          />
+          <FeatureItem
+            icon={<ShoppingBag className="h-6 w-6 text-purple-300" aria-hidden="true" />}
+            text="Showcase your merchandise during live streams to drive sales—or get started with help from YSN’s vendor partners."
+          />
+          <FeatureItem
+            icon={<IdCard className="h-6 w-6 text-purple-300" aria-hidden="true" />}
+            text="Create player profiles to boost recruitment. Scouts and coaches can view Game Reels and access profiles directly during live games."
+          />
+
+          {/* Right column */}
+          <FeatureItem
+            icon={<Video className="h-6 w-6 text-purple-300" aria-hidden="true" />}
+            text="Live stream home and away games to reach fans wherever they are."
+          />
+          <FeatureItem
+            icon={<MessageSquare className="h-6 w-6 text-purple-300" aria-hidden="true" />}
+            text="Enable live chat for a more engaging, community-driven experience."
+          />
+          <FeatureItem
+            icon={<Mic2 className="h-6 w-6 text-purple-300" aria-hidden="true" />}
+            text="Add excitement with YSN broadcasters calling your game."
+          />
         </div>
       </section>
 

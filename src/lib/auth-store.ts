@@ -1,118 +1,126 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface User {
-  id: number
-  token: string
-  name: string
-  email: string
-  user_type: number
+  id: number;
+  token: string;
+  name: string;
+  email: string;
+  user_type: number;
 }
+
+export const USER_TYPE = {
+  SUPER_ADMIN: 9,
+  COACH: 3,
+  ORGANIZATION: 2,
+  PLAYER: 5,
+} as const;
+
+export type AppRole = "super_admin" | "coach" | "organization" | "player";
+export type AnyRole = AppRole | "guest";
 
 interface AuthState {
-  user: User | null
-  isAuthenticated: boolean
-  loading: boolean
-  hydrated: boolean
-  error: string | null
-  login: (email: string, password: string) => Promise<boolean>
-  logout: () => Promise<boolean>
-  clearError: () => void
-  setHydrated: () => void
-  setUser: (user: User) => void
-  clearAllStorage: () => void
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  hydrated: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  clearError: () => void;
+  setHydrated: () => void;
+  setUser: (user: User) => void;
+  clearAllStorage: () => void;
+  isSuperAdmin: () => boolean;
+  isCoach: () => boolean;
+  isOrganization: () => boolean;
+  isPlayer: () => boolean;
+  isUserType: (type: number) => boolean;
+  getRole: () => AnyRole;
+  hasAnyRole: (roles: AppRole[]) => boolean;
 }
 
-// Function to clear all localStorage data
 const clearAllLocalStorage = () => {
   try {
-    // Log what's being cleared for debugging
-    const keys = Object.keys(localStorage)
-    console.log('AuthStore: Clearing localStorage keys:', keys)
-    
-    // Clear all localStorage items
-    localStorage.clear()
-    console.log('AuthStore: All localStorage data cleared successfully')
-  } catch (error) {
-    console.warn('AuthStore: Error clearing localStorage:', error)
-  }
-}
+    const keys = Object.keys(localStorage);
+    console.log("AuthStore: Clearing localStorage keys:", keys);
 
-// Function to clear localStorage before auth store rehydrates
+    localStorage.clear();
+    console.log("AuthStore: All localStorage data cleared successfully");
+  } catch (error) {
+    console.warn("AuthStore: Error clearing localStorage:", error);
+  }
+};
+
 export const clearAuthStorage = () => {
   try {
-    // Clear all localStorage data, not just the auth storage
-    localStorage.clear()
-    console.log('AuthStore: All localStorage data cleared before rehydration')
+    localStorage.clear();
+    console.log("AuthStore: All localStorage data cleared before rehydration");
   } catch (error) {
-    console.warn('AuthStore: Error clearing auth storage:', error)
+    console.warn("AuthStore: Error clearing auth storage:", error);
   }
-}
+};
 
-// Function to check and clear localStorage if on login page or has login URL parameters
 export const checkAndClearStorage = () => {
-  if (typeof window !== 'undefined') {
-    const pathname = window.location.pathname
-    const urlParams = new URLSearchParams(window.location.search)
-    const status = urlParams.get('status')
-    
-    // Clear localStorage if:
-    // 1. We're on the login page WITHOUT any status (regular login page)
-    // 2. We have error status
-    // 3. We're on the root path with error status
-    // DON'T clear for success status - let AuthProvider handle it AFTER processing
-    if ((pathname === '/login' && !status) || 
-        status === 'error' || 
-        (pathname === '/' && status === 'error')) {
-      console.log('AuthStore: Clearing localStorage for fresh state, status:', status || 'none')
-      localStorage.clear()
+  if (typeof window !== "undefined") {
+    const pathname = window.location.pathname;
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+
+    if (
+      (pathname === "/login" && !status) ||
+      status === "error" ||
+      (pathname === "/" && status === "error")
+    ) {
+      console.log(
+        "AuthStore: Clearing localStorage for fresh state, status:",
+        status || "none"
+      );
+      localStorage.clear();
     }
   }
-}
+};
 
-// Call this immediately when the module loads
-checkAndClearStorage()
+checkAndClearStorage();
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
-      loading: true, // Start with loading true
-      hydrated: false, // Start with hydrated false
+      loading: true,
+      hydrated: false,
       error: null,
 
       clearAllStorage: () => {
-        clearAllLocalStorage()
-        // Reset the store state
+        clearAllLocalStorage();
         set({
           user: null,
           isAuthenticated: false,
           loading: false,
           hydrated: false,
           error: null,
-        })
+        });
       },
 
       login: async (email: string, password: string) => {
-        // Always clear localStorage before login to ensure fresh state
-        clearAllLocalStorage()
-        
-        set({ loading: true, error: null })
+        clearAllLocalStorage();
+
+        set({ loading: true, error: null });
 
         try {
-          const response = await fetch('https://beta.ysn.tv/api/login', {
-            method: 'POST',
+          const response = await fetch("https://beta.ysn.tv/api/login", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               email,
               password,
             }),
-          })
+          });
 
-          const data = await response.json()
+          const data = await response.json();
 
           if (data.status === true) {
             set({
@@ -120,154 +128,169 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
               loading: false,
               error: null,
-            })
-            return true
+            });
+            return true;
           } else {
             set({
               loading: false,
-              error: data.message || 'Login failed',
-            })
-            return false
+              error: data.message || "Login failed",
+            });
+            return false;
           }
         } catch {
           set({
             loading: false,
-            error: 'Network error. Please try again.',
-          })
-          return false
+            error: "Network error. Please try again.",
+          });
+          return false;
         }
       },
 
       logout: async () => {
-        const { user } = get()
-        
-        // Clear all localStorage data when logging out
-        clearAllLocalStorage()
-        
+        const { user } = get();
+
+        clearAllLocalStorage();
+
         if (!user?.token) {
-          // If no token, just clear local state
           set({
             user: null,
             isAuthenticated: false,
             error: null,
-          })
-          return true
+          });
+          return true;
         }
 
         try {
-          const response = await fetch('https://beta.ysn.tv/api/logout', {
-            method: 'GET',
+          const response = await fetch("https://beta.ysn.tv/api/logout", {
+            method: "GET",
             headers: {
-              'Authorization': `Bearer ${user.token}`,
-              'Content-Type': 'application/json',
+              Authorization: `Bearer ${user.token}`,
+              "Content-Type": "application/json",
             },
-          })
+          });
 
-          const data = await response.json()
+          const data = await response.json();
 
-          // Clear local state regardless of API response
           set({
             user: null,
             isAuthenticated: false,
             error: null,
-          })
+          });
 
           if (data.status === true) {
-            return true
+            return true;
           } else {
-            // Log the error but don't show it to user since we've already logged out locally
-            console.warn('Logout API error:', data.message)
-            return true
+            console.warn("Logout API error:", data.message);
+            return true;
           }
         } catch (error) {
-          // Even if API call fails, clear local state
           set({
             user: null,
             isAuthenticated: false,
             error: null,
-          })
-          console.warn('Logout network error:', error)
-          return true
+          });
+          console.warn("Logout network error:", error);
+          return true;
         }
       },
 
       clearError: () => {
-        set({ error: null })
+        set({ error: null });
       },
 
       setHydrated: () => {
-        set({ loading: false, hydrated: true })
+        set({ loading: false, hydrated: true });
       },
 
       setUser: (user: User) => {
-        console.log('AuthStore: setUser called with', user)
-        // Don't clear localStorage here - let it be handled by the persistence mechanism
+        console.log("AuthStore: setUser called with", user);
         set({
           user,
           isAuthenticated: true,
           loading: false,
           hydrated: true,
           error: null,
-        })
-        console.log('AuthStore: User state set successfully')
+        });
+        console.log("AuthStore: User state set successfully");
+      },
+      isSuperAdmin: () => get().user?.user_type === USER_TYPE.SUPER_ADMIN,
+      isCoach: () => get().user?.user_type === USER_TYPE.COACH,
+      isOrganization: () => get().user?.user_type === USER_TYPE.ORGANIZATION,
+      isPlayer: () => get().user?.user_type === USER_TYPE.PLAYER,
+      isUserType: (type: number) => get().user?.user_type === type,
+      getRole: () => {
+        const t = get().user?.user_type;
+        if (t === USER_TYPE.SUPER_ADMIN) return "super_admin";
+        if (t === USER_TYPE.COACH) return "coach";
+        if (t === USER_TYPE.ORGANIZATION) return "organization";
+        if (t === USER_TYPE.PLAYER) return "player";
+        return "guest";
+      },
+      hasAnyRole: (roles: AppRole[]) => {
+        const role = get().getRole();
+        return roles.includes(role as AppRole);
       },
     }),
     {
-      name: 'ysn-auth-storage',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      name: "ysn-auth-storage",
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
       skipHydration: false,
       onRehydrateStorage: () => (state) => {
-        console.log('AuthStore: Rehydrating state', state)
-        
-        if (typeof window !== 'undefined') {
-          const pathname = window.location.pathname
-          const urlParams = new URLSearchParams(window.location.search)
-          const status = urlParams.get('status')
-          
-          // Check if we should clear storage 
-          const shouldClearStorage = (pathname === '/login' && !status) || 
-                                   status === 'error' || 
-                                   (pathname === '/' && status === 'error')
-          
+        console.log("AuthStore: Rehydrating state", state);
+
+        if (typeof window !== "undefined") {
+          const pathname = window.location.pathname;
+          const urlParams = new URLSearchParams(window.location.search);
+          const status = urlParams.get("status");
+
+          const shouldClearStorage =
+            (pathname === "/login" && !status) ||
+            status === "error" ||
+            (pathname === "/" && status === "error");
+
           if (state) {
-            // If we should clear storage, reset state completely
             if (shouldClearStorage) {
-              console.log('AuthStore: Clearing localStorage and resetting state for fresh login, status:', status || 'none')
-              clearAllLocalStorage()
-              // Reset the state completely
-              state.user = null
-              state.isAuthenticated = false
-              state.loading = false
-              state.hydrated = true // Set hydrated directly
-              state.error = null
-              return
+              console.log(
+                "AuthStore: Clearing localStorage and resetting state for fresh login, status:",
+                status || "none"
+              );
+              clearAllLocalStorage();
+              state.user = null;
+              state.isAuthenticated = false;
+              state.loading = false;
+              state.hydrated = true;
+              state.error = null;
+              return;
             }
-            
-            // For successful login with URL parameters, preserve state and let AuthProvider handle it
-            if (status === 'success') {
-              console.log('AuthStore: Success status detected, preserving state for AuthProvider processing')
-              // Just mark as hydrated, don't modify the state
-              state.loading = false
-              state.hydrated = true
-              return
+
+            if (status === "success") {
+              console.log(
+                "AuthStore: Success status detected, preserving state for AuthProvider processing"
+              );
+              state.loading = false;
+              state.hydrated = true;
+              return;
             }
-            
-            // Ensure isAuthenticated is properly set based on user data
+
             if (state.user && state.user.token && !state.isAuthenticated) {
-              console.log('AuthStore: User data found but not authenticated, fixing state')
-              state.isAuthenticated = true
+              console.log(
+                "AuthStore: User data found but not authenticated, fixing state"
+              );
+              state.isAuthenticated = true;
             }
-            
-            // Set hydrated directly instead of calling setHydrated to prevent loops
-            state.loading = false
-            state.hydrated = true
-            console.log('AuthStore: State hydrated successfully', { 
-              hasUser: !!state.user, 
-              isAuthenticated: state.isAuthenticated 
-            })
+
+            state.loading = false;
+            state.hydrated = true;
+            console.log("AuthStore: State hydrated successfully", {
+              hasUser: !!state.user,
+              isAuthenticated: state.isAuthenticated,
+            });
           }
         }
       },
     }
   )
-) 
+);
