@@ -133,7 +133,7 @@ export const MyCalender: React.FC<Props> = ({
   };
 
   return (
-    <div className="h-full xl:min-h-screen bg-[#0B0B18] md:p-6 text-white rounded-2xl">
+    <div className="h-full bg-[#0B0B18] md:p-6 text-white rounded-2xl">
       <div className="custom-dark-calendar">
         <FullCalendar
           ref={calendarRef}

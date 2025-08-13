@@ -649,4 +649,52 @@ export const api = {
       }
     },
   },
+
+  // Organizations & Teams API
+  organizations: {
+    async getDetails(slug: string): Promise<ApiResponse> {
+      const response = await api.get(`${BASE_URL}/organization-details/${encodeURIComponent(slug)}`)
+      return response.json()
+    },
+
+    teams: {
+      async storeUpdate(data: FormData): Promise<ApiResponse> {
+        const { user } = useAuthStore.getState()
+
+        const headers: Record<string, string> = {}
+        if (user?.token) {
+          headers.Authorization = `Bearer ${user.token}`
+        }
+
+        const response = await api.fetch(`${BASE_URL}/team/store-update`, {
+          method: 'POST',
+          headers,
+          body: data,
+        })
+
+        if (!response.ok) {
+          const errText = await response.text()
+          throw new Error(errText || 'Failed to create/update team')
+        }
+        return response.json()
+      },
+
+      async delete(payload: { deletedId: string }): Promise<ApiResponse> {
+        const { user } = useAuthStore.getState()
+        const headers: Record<string, string> = {}
+        if (user?.token) {
+          headers.Authorization = `Bearer ${user.token}`
+        }
+        const response = await api.delete(`${BASE_URL}/team/delete`, {
+          headers,
+          body: JSON.stringify(payload),
+        })
+        if (!response.ok) {
+          const errText = await response.text()
+          throw new Error(errText || 'Failed to delete team')
+        }
+        return response.json()
+      },
+    },
+  },
 } 

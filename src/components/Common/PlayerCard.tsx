@@ -30,7 +30,7 @@ export const PlayerCard = ({ className = "", isOrganization, isOrganisation, tea
         className
       )}
     >
-      <div className="p-4 bg-[#0404043B] rounded-full">
+      <div className="p-4 pt-0 bg-[#0404043B] rounded-full">
         <div
           className={cn(
             "rounded-full bg-gradient-to-b from-[#7940D7] to-[#2D09A3] flex items-center justify-center p-1",

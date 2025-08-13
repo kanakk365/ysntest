@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuthStore } from "@/lib/auth-store"
+import { useAuthStore, USER_TYPE } from "@/lib/auth-store"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { useEffect, useState, ReactNode } from "react"
 
@@ -125,12 +125,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (currentState.isAuthenticated && currentState.user) {
               console.log('AuthProvider: Redirecting based on user type:', userData.user_type)
               // Clear the URL parameters by redirecting to the appropriate dashboard
-              if (userData.user_type === 9) {
+              if (userData.user_type === USER_TYPE.SUPER_ADMIN) {
                 // Super Admin
                 router.replace('/dashboard')
-              } else if (userData.user_type === 3) {
+              } else if (userData.user_type === USER_TYPE.COACH) {
                 // Coach
                 router.replace('/dashboard/coach')
+              } else if (
+                userData.user_type === USER_TYPE.ORGANIZATION ||
+                userData.user_type === USER_TYPE.PLAYER
+              ) {
+                // Organization or Player → Home
+                router.replace('/')
               } else {
                 // Unknown user type, redirect to landing page
                 router.replace('/')
@@ -147,10 +153,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
               })
               
               setTimeout(() => {
-                if (userData.user_type === 9) {
+                if (userData.user_type === USER_TYPE.SUPER_ADMIN) {
                   router.replace('/dashboard')
-                } else if (userData.user_type === 3) {
+                } else if (userData.user_type === USER_TYPE.COACH) {
                   router.replace('/dashboard/coach')
+                } else if (
+                  userData.user_type === USER_TYPE.ORGANIZATION ||
+                  userData.user_type === USER_TYPE.PLAYER
+                ) {
+                  router.replace('/')
                 } else {
                   router.replace('/')
                 }
@@ -189,15 +200,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isProcessingLogin
       })
       
-      // If authenticated, redirect based on user type (but only if we're not already on the right page)
+      // If authenticated, redirect only when needed
       if (isAuthenticated && user) {
         console.log('AuthProvider: User authenticated, checking user type and pathname', { user_type: user.user_type, pathname })
-        if (user.user_type === 9 && pathname !== "/dashboard") {
+        // Super admin → ensure on /dashboard when accessing restricted routes or login
+        if (user.user_type === USER_TYPE.SUPER_ADMIN && (pathname === "/login" || pathname.startsWith("/dashboard/coach"))) {
           console.log('AuthProvider: Redirecting super admin to dashboard')
           router.push("/dashboard")
-        } else if (user.user_type === 3 && pathname !== "/dashboard/coach") {
+        // Coach → ensure on /dashboard/coach when accessing restricted routes or login
+        } else if (user.user_type === USER_TYPE.COACH && (pathname === "/login" || pathname === "/dashboard")) {
           console.log('AuthProvider: Redirecting coach to coach dashboard')
           router.push("/dashboard/coach")
+        // Org/Player → send to home if on login or restricted dashboards
+        } else if (
+          (user.user_type === USER_TYPE.ORGANIZATION || user.user_type === USER_TYPE.PLAYER) &&
+          (pathname === "/login" || pathname.startsWith("/dashboard"))
+        ) {
+          console.log('AuthProvider: Redirecting organization/player to home')
+          router.push("/")
         }
       }
     } else if (hasStatusParam) {
@@ -241,22 +261,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return <>{children}</>
   }
 
-  // If authenticated and on dashboard pages, show the appropriate dashboard
+  // If authenticated
   if (isAuthenticated && user) {
     console.log('AuthProvider: Rendering check', { user_type: user.user_type, pathname, isAuthenticated, hasUser: !!user })
-    if ((user.user_type === 9 && pathname === "/dashboard") || 
-        (user.user_type === 3 && pathname === "/dashboard/coach")) {
-      console.log('AuthProvider: Rendering children for authenticated user')
-      return <>{children}</>
-    } else {
-      // User is authenticated but on wrong path - let the useEffect handle redirect
-      console.log('AuthProvider: User authenticated but on wrong path, showing redirecting...')
+    // Guard restricted areas
+    if (pathname === "/dashboard" && user.user_type !== USER_TYPE.SUPER_ADMIN) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-foreground">Redirecting to dashboard...</div>
+          <div className="text-foreground">Redirecting...</div>
         </div>
       )
     }
+    if (pathname.startsWith("/dashboard/coach") && user.user_type !== USER_TYPE.COACH) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-foreground">Redirecting...</div>
+        </div>
+      )
+    }
+    if (pathname === "/login") {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-foreground">Redirecting...</div>
+        </div>
+      )
+    }
+    // Otherwise, render the app normally (marketing pages, home, etc.)
+    return <>{children}</>
   }
 
   // For all other cases (including unauthenticated users on main page), render children

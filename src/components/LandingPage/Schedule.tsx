@@ -1,9 +1,11 @@
 "use client"
 
-import React, { useMemo, useRef, useState } from "react"
+import React, { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Users, CalendarDays } from "lucide-react"
+import { Users, CalendarDays } from "lucide-react"
+import { ImageSlider } from "@/components/Organization/ImageSlider"
+import { CarouselItem } from "@/components/ui/carousel"
 
 type MatchStatus = "upcoming" | "live" | "past"
 
@@ -35,15 +37,14 @@ const tabs = [
 
 export default function Schedule() {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["value"]>("all")
-  const scrollRef = useRef<HTMLDivElement>(null)
+  // Legacy ref removed; slider handled by ImageSlider
 
   const filtered = useMemo(
     () => (activeTab === "all" ? matches : matches.filter((m) => m.status === activeTab)),
     [activeTab]
   )
 
-  const scrollLeft = () => scrollRef.current?.scrollBy({ left: -340, behavior: "smooth" })
-  const scrollRight = () => scrollRef.current?.scrollBy({ left: 340, behavior: "smooth" })
+  // Carousel arrows are handled inside ImageSlider
 
   const badgeClass = (status: MatchStatus) =>
     status === "live"
@@ -54,7 +55,7 @@ export default function Schedule() {
 
   return (
     <section className="py-12 md:py-16 bg-black" id="schedule_section">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
+      <div className=" mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
@@ -64,7 +65,7 @@ export default function Schedule() {
         </div>
 
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-6">
           {tabs.map((t) => (
             <Button
               key={t.value}
@@ -77,30 +78,16 @@ export default function Schedule() {
           ))}
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-end gap-2 mb-3">
-          <Button onClick={scrollLeft} size="icon" variant="outline" className="h-8 w-8">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button onClick={scrollRight} size="icon" variant="outline" className="h-8 w-8">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Cards */}
-        <div
-          ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-2"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
+        {/* Cards using ImageSlider */}
+        <ImageSlider>
           {filtered.map((match) => (
-            <div
+            <CarouselItem
               key={match.id}
-              className="flex-shrink-0 w-80 max-w-[320px] rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:scale-[1.01] transition-transform duration-200"
+              className="flex-shrink-0 gap-5 w-80 max-w-[320px] p-0 bg-gray-900 rounded-xl overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-300"
             >
-              <div className="relative h-48">
-                <Image src={match.image} alt={match.title} fill sizes="320px" className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="relative h-48 overflow-hidden">
+                <Image src={match.image} alt={match.title} fill sizes="320px" className="object-cover group-hover:scale-110 transition-transform duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute top-3 left-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${badgeClass(match.status)}`}>
                     {match.status === "live" ? "Live" : match.status === "upcoming" ? "Upcoming" : "Past"}
@@ -118,9 +105,9 @@ export default function Schedule() {
                 </div>
                 <div className="text-xs text-gray-400">{match.sport}</div>
               </div>
-            </div>
+            </CarouselItem>
           ))}
-        </div>
+        </ImageSlider>
       </div>
     </section>
   )

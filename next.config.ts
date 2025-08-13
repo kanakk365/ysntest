@@ -38,6 +38,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'ysn-new.tv',
         port: '',
+        pathname: '/assets/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'ysn-new.tv',
+        port: '',
+        pathname: '/assets/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ysn-new.tv',
+        port: '',
         pathname: '/storage/**',
       },
     ],

@@ -24,13 +24,11 @@ interface UpcomingMatchEvent {
 }
 
 interface UpcomingMatchProps {
-  isOrganisation?: boolean;
   events?: UpcomingMatchEvent[];
   title?: string;
 }
 
 const UpcomingMatch: React.FC<UpcomingMatchProps> = ({
-  isOrganisation = false,
   events = [],
   title,
 }) => {
@@ -43,6 +41,8 @@ const UpcomingMatch: React.FC<UpcomingMatchProps> = ({
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(
     null
   );
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const [leftHeight, setLeftHeight] = useState<number | undefined>(undefined);
 
   const handleEventClick = (info: EventClickArg | UpcomingMatchEvent) => {
     const isFcArg = (i: unknown): i is EventClickArg =>
@@ -92,6 +92,20 @@ const UpcomingMatch: React.FC<UpcomingMatchProps> = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!leftColRef.current) return;
+    const element = leftColRef.current;
+    const measure = () => setLeftHeight(element.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(element);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
     };
   }, []);
 
@@ -155,19 +169,11 @@ const UpcomingMatch: React.FC<UpcomingMatchProps> = ({
           </div>
         </div>
         {/* Weekdays */}
-        <div
-          className={`${
-            isOrganisation
-              ? "flex flex-col lg:flex-row gap-2 h-full xl:min-h-[500px]"
-              : ""
-          }`}
+          <div
+            className="flex flex-col lg:flex-row gap-2 h-full xl:min-h-[500px]"
           id="events_section_demo"
         >
-          <div
-            className={`flex flex-col h-full ${
-              isOrganisation ? "w-full lg:w-[80%]" : ""
-            }`}
-          >
+            <div ref={leftColRef} className="flex flex-col h-full w-full lg:w-[65%]">
             <MyCalender
               events={events}
               modalOpen={modalOpen}
@@ -191,14 +197,17 @@ const UpcomingMatch: React.FC<UpcomingMatchProps> = ({
               handleEdit={(e) => handleEdit(e)}
             />
           </div>
-          <div className="relative md:p-4 pt-0 w-full lg:w-[35%] h-min-screen bg-gradient-to-b from-[#0d0c12] to-[#0d0918] rounded-2xl  ">
+            <div
+              className="relative md:p-4 pt-0 w-full lg:w-[35%] bg-gradient-to-b from-[#0d0c12] to-[#0d0918] rounded-2xl flex flex-col h-full"
+              style={{ height: leftHeight ? `${leftHeight}px` : undefined }}
+            >
             <div className="flex items-center justify-between">
               <p className="bg-transparent top-0 w-full  p-4 text-lg font-semibold h-[40px] mb-4">
                 {format(new Date(), "MMMM yyyy")}
               </p>
               <div>{/* Placeholder for future export button */}</div>
             </div>
-            <div className="flex flex-col gap-5 custom-scrollbar h-full xl:h-[700px] overflow-y-scroll">
+              <div className="flex flex-col gap-5 custom-scrollbar flex-1 min-h-0 overflow-y-auto">
               {events.length > 0 &&
                 events.map((event, index: number) => (
                   <div

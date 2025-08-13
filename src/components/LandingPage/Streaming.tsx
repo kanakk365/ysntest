@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Share2, Star } from "lucide-react"
 import { useAuthStore } from "@/lib/auth-store"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import Image from "next/image"
+import ShareModal from "@/components/Common/ShareModal"
+import ChatSection from "./ChatSection"
 
 type RosterItem = {
   id: number
@@ -31,6 +32,7 @@ export default function Streaming() {
   const router = useRouter()
   const [joinedStreams, setJoinedStreams] = useState<number[]>([])
   const [isClient, setIsClient] = useState(false)
+  const [isShareOpen, setIsShareOpen] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
@@ -59,12 +61,7 @@ export default function Streaming() {
     sliderRef.current?.scrollBy({ left: 240, behavior: "smooth" })
   }
 
-  const handleShare = () => {
-    if (!isClient) return
-    const url = `${window.location.origin}${window.location.pathname}#streaming_section`
-    navigator.clipboard.writeText(url)
-    toast.success("Link copied to clipboard")
-  }
+  const handleShare = () => setIsShareOpen(true)
 
   return (
     <section className=" bg-black py-12 md:py-16 " id="streaming_section">
@@ -81,7 +78,7 @@ export default function Streaming() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-4 gap-6 items-stretch">
 
           {/* Main content */}
           <div className="lg:col-span-3 xl:col-span-3 space-y-6">
@@ -161,14 +158,18 @@ export default function Streaming() {
             </div>
           </div>
 
-          {/* Right column placeholder for future chat/side content */}
-          <div className="hidden lg:block">
-            <Card className="border-dashed border-border h-full min-h-[200px] p-4 text-sm text-muted-foreground">
-              Side content placeholder
-            </Card>
+          {/* Right column chat section */}
+          <div className="hidden lg:block h-full">
+            <ChatSection className="h-full" />
           </div>
         </div>
       </div>
+      <ShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        url={isClient ? `${window.location.origin}${window.location.pathname}#streaming_section` : ""}
+        title="Live Streams"
+      />
     </section>
   )
 }
