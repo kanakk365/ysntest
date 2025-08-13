@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import Blog from "@/components/LandingPage/Blog"
-import Contact from "@/components/LandingPage/Contact"
+import Contact from "@/components/ui/contact"
 import { ArrowRight } from "lucide-react"
 
 type Sponsor = {

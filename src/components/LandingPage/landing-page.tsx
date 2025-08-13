@@ -8,7 +8,7 @@ import Streaming from "@/components/LandingPage/Streaming";
 import Schedule from "@/components/LandingPage/Schedule";
 import Shop from "@/components/LandingPage/Shop";
 import Blog from "@/components/LandingPage/Blog";
-import Contact from "@/components/LandingPage/Contact";
+import Contact from "@/components/ui/contact";
 import Footer from "@/components/Common/Footer";
 
 export function LandingPage() {

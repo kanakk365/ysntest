@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import Blog from "@/components/LandingPage/Blog";
-import Contact from "@/components/LandingPage/Contact";
+import Contact from "@/components/ui/contact";
 import TopCard from "@/components/Organization/TopCard";
 import Teams from "@/components/Organization/Teams";
 import MatchCard from "@/components/Organization/MatchCard";
