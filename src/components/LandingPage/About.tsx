@@ -40,26 +40,26 @@ export default function About() {
       title: "Battle Lounge",
       subtitle: "Esports Tournament Platform",
       description:
-        "A hybrid esports tournament platform that merges in-person and online gameplay, allowing youth athletes and gamers to compete in popular video games at our facility's dedicated mini esports arena or remotely through our digital infrastructure.",
+        "A hybrid esports tournament platform merging in-person and online gameplay, allowing youth athletes to compete at our facility or remotely.",
       icon: <Gamepad2 className="w-5 h-5" />,
       color: customGradients[0],
       points: [
         {
           title: "In-Person & Online Tournaments",
           description:
-            "Host and participate in real-time esports events from anywhere. Our platform seamlessly connects players whether they're competing from our facility or remotely.",
+            "Host and participate in real-time esports events from anywhere. Seamlessly connects players competing locally or remotely.",
           image: "/landing/battle-lounge-homepage.webp",
         },
         {
           title: "Tournament Management System",
           description:
-            "Complete tournament lifecycle management with registration, brackets, player tracking, and real-time updates.",
+            "Complete tournament lifecycle with registration, brackets, player tracking, and real-time updates.",
           image: "/landing/battle-lounge-tournament.webp",
         },
         {
           title: "Personal Gaming Dashboard",
           description:
-            "Track your tournament history, upcoming events, and gaming achievements with comprehensive profiles and analytics.",
+            "Track tournament history, upcoming events, and gaming achievements with comprehensive profiles and analytics.",
           image: "/landing/battle-lounge-dashboard.webp",
         },
       ],
@@ -75,19 +75,19 @@ export default function About() {
         {
           title: "Professional Live Streaming",
           description:
-            "Broadcast high-quality live streams of matches and events with professional presentation and seamless viewing experience.",
+            "Broadcast high-quality live streams with professional presentation and seamless viewing experience.",
           image: "/landing/ysn-main-stream.webp",
         },
         {
           title: "Interactive Viewing Experience",
           description:
-            "Engage with live chat, view multiple camera angles, and access upcoming match schedules in real-time.",
+            "Engage with live chat, multiple camera angles, and real-time match schedules.",
           image: "/landing/ysn-live-interface.webp",
         },
         {
           title: "Team Management Platform",
           description:
-            "Comprehensive team administration with player rosters, match history, statistics tracking, and coaching tools.",
+            "Comprehensive team administration with rosters, match history, statistics, and coaching tools.",
           image: "/landing/ysn-team-dashboard.webp",
         },
       ],
@@ -103,19 +103,19 @@ export default function About() {
         {
           title: "Athlete Profiles & Statistics",
           description:
-            "Track performance, growth, and milestones across seasons with rich data visualizations and comprehensive analytics.",
+            "Track performance, growth, and milestones with rich data visualizations and comprehensive analytics.",
           image: "/landing/playhub-profile-and-status-2.webp",
         },
         {
           title: "Event & Tournament Management",
           description:
-            "Register for events, manage schedules, and stay updated on upcoming tournaments and showcases.",
+            "Register for events, manage schedules, and stay updated on tournaments and showcases.",
           image: "/landing/playhub-2.webp",
         },
         {
           title: "Recruitment & Gear Hub",
           description:
-            "Showcase highlight reels, connect with college scouts, and purchase sport-specific equipment and gear.",
+            "Showcase highlight reels, connect with scouts, and purchase sport-specific equipment.",
           image: "/landing/playerhub-analytics.webp",
         },
       ],
@@ -131,19 +131,19 @@ export default function About() {
         {
           title: "Recruitment Videos",
           description:
-            "Professional recruitment videos designed to showcase athlete skills and achievements for college scouts and recruiters.",
+            "Professional videos showcasing athlete skills and achievements for scouts and recruiters.",
           image: "/landing/myreels-football.webp",
         },
         {
           title: "Social Media Content",
           description:
-            "Optimized content for social media platforms to help athletes build their personal brand and online presence.",
+            "Optimized content for social media to help athletes build their personal brand and online presence.",
           image: "/landing/playhub-2.webp",
         },
         {
           title: "Game Highlights",
           description:
-            "Cinematic game highlight compilations with professional editing, music, and visual effects.",
+            "Cinematic highlight compilations with professional editing, music, and visual effects.",
           image: "/landing/player-dashboard.webp",
         },
       ],
@@ -159,19 +159,19 @@ export default function About() {
         {
           title: "AI Movement Analysis",
           description:
-            "Advanced computer vision breaks down form and technique using video data compared against professional benchmarks.",
+            "Computer vision breaks down form and technique using video data compared against professional benchmarks.",
           image: "/landing/connected-athlete.webp",
         },
         {
           title: "Injury Risk Detection",
           description:
-            "Proactively identifies potential injury risks before they become problems through movement pattern analysis.",
+            "Proactively identifies potential injury risks through movement pattern analysis.",
           image: "/landing/connected-athlete-dashboard.webp",
         },
         {
           title: "Integrated Recovery System",
           description:
-            "Syncs with therapists and health systems to deliver personalized improvement and recovery plans.",
+            "Syncs with therapists and health systems to deliver personalized recovery plans.",
           image: "/landing/connected-athlete-profile.webp",
         },
       ],
@@ -363,17 +363,17 @@ export default function About() {
                     </div>
                   </div>
 
-                  {hoveredPoint === index && (
+                  {/* {hoveredPoint === index && (
                     <motion.div
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ duration: 0.3 }}
                       className={cn(
-                        "absolute bottom-0 left-6 right-6 h-1 rounded-full bg-gradient-to-r origin-left",
+                        "absolute bottom-0 left-2 right-2 rounded-xl h-1  bg-gradient-to-r origin-left",
                         technologyItems[activeTab].color
                       )}
                     />
-                  )}
+                  )} */}
                 </motion.div>
               ))}
             </div>
