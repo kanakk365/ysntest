@@ -2,9 +2,9 @@
 
 import React from "react"
 import { Star } from "lucide-react"
-import { ImageSlider } from "./ImageSlider"
+import ImageSlider from "./ImageSlider"
 import { CarouselItem } from "../ui/carousel"
-import { MatchBgCard } from "./MatchBgCard"
+import MatchBgCard from "./MatchBgCard"
 
 type MatchScheduleItem = {
   match_id: number

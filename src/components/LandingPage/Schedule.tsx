@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Users, CalendarDays } from "lucide-react"
-import { ImageSlider } from "@/components/Organization/ImageSlider"
+import ImageSlider from "@/components/Organization/ImageSlider"
 import { CarouselItem } from "@/components/ui/carousel"
 
 type MatchStatus = "upcoming" | "live" | "past"
@@ -110,7 +110,5 @@ export default function Schedule() {
         </ImageSlider>
       </div>
     </section>
-  )
+  );
 }
-
-

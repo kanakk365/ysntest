@@ -3,7 +3,7 @@
 import Link from "next/link"
 import React from "react"
 import { Star } from "lucide-react"
-import { ImageSlider } from "@/components/Organization/ImageSlider"
+import  ImageSlider  from "@/components/Organization/ImageSlider"
 import { CarouselItem } from "@/components/ui/carousel"
 import { cn } from "@/lib/utils"
 import { PlayerCard } from "@/components/Common/PlayerCard"

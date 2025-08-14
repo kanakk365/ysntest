@@ -7,7 +7,7 @@ interface props {
     className ?:string
 }
 
-export const ImageSlider = ({children, className=""}:props) => {
+export default function ImageSlider ({children, className=""}:props) {
     const [carouselApi, setCarouselApi] = useState<CarouselApi>();
     const [canScrollPrev, setCanScrollPrev] = useState(false);
     const [canScrollNext, setCanScrollNext] = useState(false);
@@ -55,5 +55,5 @@ export const ImageSlider = ({children, className=""}:props) => {
         </Carousel>
     </div>
 
-  )
+  );  
 }
