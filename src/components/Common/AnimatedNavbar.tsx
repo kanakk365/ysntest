@@ -25,7 +25,8 @@ export function NavBar({ items, className }: NavBarProps) {
       <div
         className="flex items-center gap-3  backdrop-blur-xl py-2 px-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(120,50,255,0.1)] transition-all duration-300"
         style={{
-          background: 'radial-gradient(87.91% 87.91% at 65.6% 48.94%, #2C1059 0%, #0D0837 100%)'
+          background:
+            "radial-gradient(87.91% 87.91% at 65.6% 48.94%, #2C1059 0%, #0D0837 100%)",
         }}
       >
         {items.map((item) => {

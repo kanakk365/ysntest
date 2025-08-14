@@ -79,7 +79,7 @@ export default function Schedule() {
         </div>
 
         {/* Cards using ImageSlider */}
-        <ImageSlider>
+        <ImageSlider className="md:gap-10 gap-10">
           {filtered.map((match) => (
             <CarouselItem
               key={match.id}
