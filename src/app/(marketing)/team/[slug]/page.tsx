@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import Blog from "@/components/LandingPage/Blog";
 import Contact from "@/components/ui/contact";

@@ -1,12 +1,12 @@
-import { motion } from "motion/react"
+import { motion, Variants } from "motion/react"
 import { cubicBezier } from "motion"
 import { Newspaper } from "lucide-react"
 
 type BlogHeaderProps = {
   isInView: boolean
   isLightTheme: boolean
-  containerVariants: any
-  itemVariants: any
+  containerVariants: Variants
+  itemVariants: Variants
 }
 
 export function BlogHeader({ isInView, isLightTheme, containerVariants, itemVariants }: BlogHeaderProps) {

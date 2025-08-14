@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useAuthStore, clearAuthStorage } from "@/lib/auth-store"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
+import Image from "next/image"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -74,7 +75,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-r from-card/10 to-background backdrop-blur-sm shadow-2xl p-8 flex flex-col items-center border border-border">
         {/* Logo */}
         <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/20 mb-6 shadow-lg">
-          <img src="/ysnlogo.webp" alt="YSN Logo" className="w-8 h-8" />
+          <Image src="/ysnlogo.webp" alt="YSN Logo" width={32} height={32} />
         </div>
         {/* Title */}
         <h2 className="text-2xl font-semibold text-foreground mb-6 text-center">
