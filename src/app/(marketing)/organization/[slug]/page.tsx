@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Blog from "@/components/LandingPage/Blog";
-import Contact from "@/components/ui/contact";
+import Contact from "@/components/LandingPage/Contact";
 import TopCard from "@/components/Organization/TopCard";
 import Teams from "@/components/Organization/Teams";
 import MatchCard from "@/components/Organization/MatchCard";

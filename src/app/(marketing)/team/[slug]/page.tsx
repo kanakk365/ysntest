@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import Blog from "@/components/LandingPage/Blog";
-import Contact from "@/components/ui/contact";
+import Contact from "@/components/LandingPage/Contact";
 import TopCard from "@/components/Organization/TopCard";
 import MatchCard from "@/components/Organization/MatchCard";
 import UpcomingMatch from "@/components/Organization/UpcomingMatch";

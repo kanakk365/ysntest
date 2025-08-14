@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import Blog from "@/components/LandingPage/Blog";
-import Contact from "@/components/ui/contact";
+import Contact from "@/components/LandingPage/Contact";
 import { useAuthStore } from "@/lib/auth-store";
 import {
   Plus,

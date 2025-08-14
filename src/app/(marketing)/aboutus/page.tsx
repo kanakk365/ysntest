@@ -1,7 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import Blog from "@/components/LandingPage/Blog"
-import Contact from "@/components/ui/contact"
+import Contact from "@/components/LandingPage/Contact"
 import { ArrowRight, Megaphone, ShoppingBag, IdCard, Video, MessageSquare, Mic2 } from "lucide-react"
 import type { ReactNode } from "react"
 
