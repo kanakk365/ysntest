@@ -47,6 +47,21 @@ const data = {
       icon: IconUserCog,
     },
     {
+      title: "Friends",
+      url: "#friends",
+      icon: IconUserCog,
+    },
+    {
+      title: "Parents",
+      url: "#parents",
+      icon: IconUserCog,
+    },
+    {
+      title: "Families",
+      url: "#families",
+      icon: IconUserCog,
+    },
+    {
       title: "Settings",
       url: "#settings",
       icon: IconSettings,

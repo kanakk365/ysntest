@@ -34,11 +34,14 @@ export function NavMain({
     }
     
     // Map sidebar items to tab names
-    const tabMap: { [key: string]: "dashboard" | "profile" | "opponents" | "coaches" | "settings" } = {
+    const tabMap: { [key: string]: "dashboard" | "profile" | "opponents" | "coaches" | "friends" | "parents" | "families" | "settings" } = {
       "Dashboard": "dashboard",
       "My Profile": "profile",
       "Opponent Teams": "opponents",
       "Coaches": "coaches",
+      "Friends":"friends",
+      "Parents":"parents",
+      "Families":"families",
       "Settings": "settings"
     }
     
@@ -60,6 +63,7 @@ export function NavMain({
               "My Profile": "profile",
               "Opponent Teams": "opponents",
               "Coaches": "coaches",
+              "Friends": "friends",
               "Settings": "settings"
             }
             const tabName = tabMap[item.title]
