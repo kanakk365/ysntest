@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { api } from './api'
 import { useAuthStore } from './auth-store'
 
-export type DashboardTab = "dashboard" | "profile" | "opponents" | "coaches" | "settings"
+export type DashboardTab = "dashboard" | "profile" | "opponents" | "coaches" | "settings" | "friends" | "parents" | "families"
 
 interface DashboardData {
   totalRevenue: {
