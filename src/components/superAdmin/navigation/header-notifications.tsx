@@ -9,10 +9,12 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetFooter,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import ChatPanel from "@/components/chat/ChatPanel"
 
 // Dummy notification data
 const notifications = [
@@ -167,7 +169,7 @@ export function NotificationIcon() {
 }
 
 export function MessageIcon() {
-  const unreadCount = messages.filter(m => !m.read).length
+  const unreadCount = 0
 
   return (
     <Sheet>
@@ -184,54 +186,16 @@ export function MessageIcon() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[500px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <IconMessage className="size-5" />
-            Messages
-            {unreadCount > 0 && (
-              <Badge variant="secondary" className="ml-auto">
-                {unreadCount} new
-              </Badge>
-            )}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex flex-col gap-3 mt-4">
-          {messages.map((message) => (
-            <Card key={message.id} className={`${message.read ? 'opacity-60' : ''} cursor-pointer hover:bg-accent/50 transition-colors`}>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={message.avatar} alt={message.sender} />
-                    <AvatarFallback>
-                      {message.sender.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium truncate">
-                        {message.sender}
-                        {!message.read && (
-                          <span className="ml-2 h-2 w-2 bg-primary rounded-full inline-block" />
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {message.time}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {message.message}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <SheetContent className="w-[420px] sm:w-[520px] p-0">
+        <div className="border-b px-4 py-3 flex items-center gap-2">
+          <IconMessage className="size-5" />
+          <span className="font-medium">Messages</span>
+          {unreadCount > 0 && (
+            <Badge variant="secondary" className="ml-auto">{unreadCount} new</Badge>
+          )}
         </div>
-        <div className="mt-4 pt-4 border-t">
-          <Button variant="outline" className="w-full">
-            View All Messages
-          </Button>
+        <div className="p-0">
+          <ChatPanel />
         </div>
       </SheetContent>
     </Sheet>
