@@ -27,17 +27,12 @@ export async function startDirectChatByAppId(
   const myUid = me.uid;
   const targetUid = toAppUid(targetAppId);
 
-  console.log("startDirectChatByAppId - myUid:", myUid);
-  console.log("startDirectChatByAppId - targetUid:", targetUid);
-
   // Only ensure our own user exists (we can't create other users' documents)
   await ensureUserExists(myUid);
 
   const id = directConvId(myUid, targetUid);
-  console.log("startDirectChatByAppId - conversationId:", id);
 
   const ref = doc(db, "conversations", id);
-  console.log("startDirectChatByAppId - checking if conversation exists...");
   const snap = await getDoc(ref);
   if (!snap.exists()) {
     const conversationData = {
@@ -51,36 +46,12 @@ export async function startDirectChatByAppId(
       userNames: targetUserName ? { [targetUid]: targetUserName } : {},
     };
 
-    console.log(
-      "startDirectChatByAppId - creating conversation with data:",
-      conversationData
-    );
-    console.log(
-      "startDirectChatByAppId - members object:",
-      conversationData.members
-    );
-    console.log(
-      "startDirectChatByAppId - memberIds array:",
-      conversationData.memberIds
-    );
-    console.log(
-      "startDirectChatByAppId - current user in members:",
-      conversationData.members[myUid]
-    );
-
     try {
       await setDoc(ref, conversationData);
-      console.log("startDirectChatByAppId - conversation created successfully");
     } catch (error) {
-      console.error(
-        "startDirectChatByAppId - failed to create conversation:",
-        error
-      );
       throw error;
     }
   } else {
-    console.log("startDirectChatByAppId - conversation already exists");
-    
     // If conversation exists and we have a target user name, update the userNames field
     if (targetUserName) {
       const existingData = snap.data();
@@ -98,10 +69,8 @@ export async function startDirectChatByAppId(
             userNames: updatedUserNames,
             updatedAt: serverTimestamp()
           });
-          console.log("startDirectChatByAppId - updated conversation with user name");
-        } catch (error) {
-          console.error("startDirectChatByAppId - failed to update user name:", error);
-          // Don't throw error here, as the conversation still exists and can be used
+        } catch {
+          // Swallow error: conversation exists; name update is non-critical
         }
       }
     }
@@ -148,23 +117,6 @@ export async function createGroupByAppIds(
   return ref.id;
 }
 
-export async function addMembersByAppIds(
-  conversationId: string,
-  appIds: Array<number | string>
-) {
-  const ref = doc(db, "conversations", conversationId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Conversation not found");
-  const data = snap.data();
-  const toAdd = appIds.map(toAppUid);
-  const memberIds = Array.from(
-    new Set([...(data.memberIds || []), ...toAdd])
-  ) as string[];
-  const members = { ...(data.members || {}) } as Record<string, true>;
-  memberIds.forEach((uid) => (members[uid] = true));
-  await updateDoc(ref, { memberIds, members, updatedAt: serverTimestamp() });
-}
-
 export async function sendMessage(conversationId: string, text: string) {
   const me = auth.currentUser;
   if (!me) throw new Error("Not signed in");
@@ -172,10 +124,10 @@ export async function sendMessage(conversationId: string, text: string) {
   await addDoc(msgCol, {
     text,
     senderId: me.uid,
-    createdAt: serverTimestamp(),
+  createdAt: serverTimestamp(),
   });
   await updateDoc(doc(db, "conversations", conversationId), {
-    lastMessage: { text, senderId: me.uid, createdAt: serverTimestamp() },
+  lastMessage: { text, senderId: me.uid, createdAt: serverTimestamp() },
     updatedAt: serverTimestamp(),
   });
 }

@@ -5,16 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  X,
-  Users,
-  Send,
-  Plus,
-  MessageCircle,
-  Hash,
-} from "lucide-react";
+import { X, Users, Send, Plus, MessageCircle, Hash } from "lucide-react";
 import { onAuthStateChanged } from "firebase/auth";
-import { onSnapshot } from "firebase/firestore";
+import { onSnapshot, Timestamp } from "firebase/firestore";
 import ChatAuthGate from "@/components/chat/ChatAuthGate";
 import { auth } from "@/lib/firebase";
 import { useChatStore } from "@/lib/chat-store";
@@ -31,7 +24,8 @@ type Conversation = {
   id: string;
   type: "direct" | "group";
   name?: string;
-  lastMessage?: { text: string; senderId: string; timestamp: string };
+  // Firestore stores lastMessage.createdAt as a Firestore Timestamp
+  lastMessage?: { text: string; senderId: string; createdAt?: Timestamp | string };
   memberIds: string[];
   userNames?: Record<string, string>;
   avatar?: string;
@@ -42,18 +36,10 @@ type Message = {
   text: string;
   senderId: string;
   senderName: string;
-  timestamp: string;
+  createdAt?: Timestamp | string; // Firestore Timestamp or string
   avatar?: string;
 };
 
-/*
-type User = {
-  id: string;
-  name: string;
-  avatar?: string;
-  status: "online" | "offline" | "away";
-};
-*/
 
 type ApiUser = {
   id: number;
@@ -70,168 +56,6 @@ type ApiUser = {
   user_slug_name: string;
 };
 
-/*
-const DUMMY_USERS: User[] = [
-  {
-    id: "user1",
-    name: "Alice Johnson",
-    avatar: "/diverse-woman-portrait.png",
-    status: "online",
-  },
-  {
-    id: "user2",
-    name: "Bob Smith",
-    avatar: "/thoughtful-man.png",
-    status: "away",
-  },
-  {
-    id: "user3",
-    name: "Carol Davis",
-    avatar: "/diverse-woman-portrait.png",
-    status: "online",
-  },
-  {
-    id: "user4",
-    name: "David Wilson",
-    avatar: "/thoughtful-man.png",
-    status: "offline",
-  },
-  {
-    id: "current",
-    name: "You",
-    avatar: "/diverse-group.png",
-    status: "online",
-  },
-];
-*/
-
-const DUMMY_CONVERSATIONS: Conversation[] = [
-  {
-    id: "conv1",
-    type: "direct",
-    memberIds: ["current", "user1"],
-    userNames: { user1: "Alice Johnson", current: "You" },
-    lastMessage: {
-      text: "Hey! How's the project going?",
-      senderId: "user1",
-      timestamp: "2 min ago",
-    },
-    avatar: "/diverse-woman-portrait.png",
-  },
-  {
-    id: "conv2",
-    type: "group",
-    name: "Design Team",
-    memberIds: ["current", "user2", "user3"],
-    userNames: { user2: "Bob Smith", user3: "Carol Davis", current: "You" },
-    lastMessage: {
-      text: "The mockups look great!",
-      senderId: "user3",
-      timestamp: "5 min ago",
-    },
-    avatar: "/diverse-professional-team.png",
-  },
-  {
-    id: "conv3",
-    type: "direct",
-    memberIds: ["current", "user4"],
-    userNames: { user4: "David Wilson", current: "You" },
-    lastMessage: {
-      text: "Thanks for the feedback",
-      senderId: "current",
-      timestamp: "1 hour ago",
-    },
-    avatar: "/thoughtful-man.png",
-  },
-];
-
-/*
-const DUMMY_MESSAGES: Record<string, Message[]> = {
-  conv1: [
-    {
-      id: "msg1",
-      text: "Hi there! How are you doing?",
-      senderId: "user1",
-      senderName: "Alice Johnson",
-      timestamp: "10:30 AM",
-      avatar: "/diverse-woman-portrait.png",
-    },
-    {
-      id: "msg2",
-      text: "I'm doing great! Just working on the new features.",
-      senderId: "current",
-      senderName: "You",
-      timestamp: "10:32 AM",
-    },
-    {
-      id: "msg3",
-      text: "That sounds exciting! Can you tell me more about it?",
-      senderId: "user1",
-      senderName: "Alice Johnson",
-      timestamp: "10:33 AM",
-      avatar: "/diverse-woman-portrait.png",
-    },
-    {
-      id: "msg4",
-      text: "We're implementing a new chat system with real-time messaging.",
-      senderId: "current",
-      senderName: "You",
-      timestamp: "10:35 AM",
-    },
-    {
-      id: "msg5",
-      text: "Hey! How's the project going?",
-      senderId: "user1",
-      senderName: "Alice Johnson",
-      timestamp: "10:38 AM",
-      avatar: "/diverse-woman-portrait.png",
-    },
-  ],
-  conv2: [
-    {
-      id: "msg6",
-      text: "Welcome to the Design Team chat!",
-      senderId: "user2",
-      senderName: "Bob Smith",
-      timestamp: "9:00 AM",
-      avatar: "/thoughtful-man.png",
-    },
-    {
-      id: "msg7",
-      text: "Thanks for adding me!",
-      senderId: "current",
-      senderName: "You",
-      timestamp: "9:02 AM",
-    },
-    {
-      id: "msg8",
-      text: "The mockups look great!",
-      senderId: "user3",
-      senderName: "Carol Davis",
-      timestamp: "9:55 AM",
-      avatar: "/diverse-woman-portrait.png",
-    },
-  ],
-  conv3: [
-    {
-      id: "msg9",
-      text: "Could you review the latest designs?",
-      senderId: "user4",
-      senderName: "David Wilson",
-      timestamp: "Yesterday",
-      avatar: "/thoughtful-man.png",
-    },
-    {
-      id: "msg10",
-      text: "Thanks for the feedback",
-      senderId: "current",
-      senderName: "You",
-      timestamp: "Yesterday",
-    },
-  ],
-};
-*/
-
 export default function ChatPanel({
   hideHeader = false,
   openChatWithUserId,
@@ -239,28 +63,62 @@ export default function ChatPanel({
   hideHeader?: boolean;
   openChatWithUserId?: string;
 }) {
-  const { closeChat, openChatWithUserId: storeOpenChatWithUserId } = useChatStore();
+  const { closeChat, openChatWithUserId: storeOpenChatWithUserId } =
+    useChatStore();
   const { user } = useAuthStore();
   const [uid, setUid] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [conversations, setConversations] =
-    useState<Conversation[]>(DUMMY_CONVERSATIONS);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [groupName, setGroupName] = useState("");
-  const [activeTab, setActiveTab] = useState<"conversations" | "directMessages" | "groupChats">(
-    "conversations"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "conversations" | "directMessages" | "groupChats"
+  >("conversations");
   const [searchQuery, setSearchQuery] = useState("");
   const [apiUsers, setApiUsers] = useState<ApiUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<ApiUser[]>([]);
   const [showUserSearch, setShowUserSearch] = useState(false);
 
+  const formatTimestamp = (ts: Timestamp | string | undefined): string => {
+    if (!ts) return "";
+    if (typeof ts === "string") return ts;
+    // Firestore Timestamp has seconds & nanoseconds
+    if (ts.seconds) {
+      const date = new Date(ts.seconds * 1000);
+      // Today show time only; otherwise show date
+      const now = new Date();
+      const sameDay =
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate();
+      return sameDay
+        ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        : date.toLocaleDateString();
+    }
+    return "";
+  };
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUid(u?.uid ?? null));
+    const unsub = onAuthStateChanged(auth, (u) => {
+      console.log(
+        "ChatPanel: Firebase auth state changed to UID:",
+        u?.uid || "null"
+      );
+      setUid(u?.uid ?? null);
+      // Clear conversations when Firebase user changes
+      if (u?.uid !== uid) {
+        console.log(
+          "ChatPanel: Firebase UID changed, clearing conversations and active chat"
+        );
+        setConversations([]);
+        setActiveId(null);
+        setMessages([]);
+      }
+    });
     return () => unsub();
-  }, []);
+  }, [uid]);
 
   useEffect(() => {
     if (!uid) return;
@@ -303,16 +161,40 @@ export default function ChatPanel({
           setActiveId(convId);
           setActiveTab("directMessages");
         } catch (error) {
-          console.error('Error opening chat with user:', error);
+          console.error("Error opening chat with user:", error);
         }
       };
       openDirectChat();
     }
   }, [openChatWithUserId, storeOpenChatWithUserId, uid]);
 
+  // Filter conversations to only show those the current user is a member of
+  const userConversations = useMemo(() => {
+    if (!uid) return [];
+    console.log("ChatPanel - Current Firebase UID:", uid);
+    console.log("ChatPanel - App User ID:", user?.id);
+    console.log(
+      "ChatPanel - All conversations:",
+      conversations.map((c) => ({ id: c.id, memberIds: c.memberIds }))
+    );
+    return conversations.filter(
+      (c) => c.memberIds && c.memberIds.includes(uid)
+    );
+  }, [conversations, uid, user?.id]);
+
+  // Filter direct messages for the current user
+  const userDirectMessages = useMemo(() => {
+    return userConversations.filter((c) => c.type === "direct");
+  }, [userConversations]);
+
+  // Filter group chats for the current user
+  const userGroupChats = useMemo(() => {
+    return userConversations.filter((c) => c.type === "group");
+  }, [userConversations]);
+
   const activeConv = useMemo(
-    () => conversations.find((c) => c.id === activeId) || null,
-    [conversations, activeId]
+    () => userConversations.find((c) => c.id === activeId) || null,
+    [userConversations, activeId]
   );
 
   const getConversationDisplayName = (
@@ -345,36 +227,38 @@ export default function ChatPanel({
       // Get auth token from auth store
       const token = user?.token;
       if (!token) {
-        console.error('No auth token available');
+        console.error("No auth token available");
         return;
       }
-      
-      const response = await fetch('https://beta.ysn.tv/api/users', {
-        method: 'GET',
+
+      const response = await fetch("https://beta.ysn.tv/api/users", {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.status && data.data) {
           setApiUsers(data.data);
         } else {
-          console.error('API returned error:', data.message || 'Unknown error');
+          console.error("API returned error:", data.message || "Unknown error");
         }
       } else {
-        console.error('Failed to fetch users:', response.status, response.statusText);
+        console.error(
+          "Failed to fetch users:",
+          response.status,
+          response.statusText
+        );
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     } finally {
       setLoadingUsers(false);
     }
   };
-
-
 
   return (
     <ChatAuthGate>
@@ -385,9 +269,16 @@ export default function ChatPanel({
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-1 ring-primary/20">
                 <MessageCircle className="h-4 w-4 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg text-foreground">
-                Messages
-              </h3>
+              <div>
+                <h3 className="font-semibold text-lg text-foreground">
+                  Messages
+                </h3>
+                {/* Temporary debugging info */}
+                <div className="text-xs text-muted-foreground">
+                  App: {user?.id} | Firebase:{" "}
+                  {uid?.replace("app_", "") || "none"}
+                </div>
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -453,56 +344,67 @@ export default function ChatPanel({
                     Recent Conversations
                   </div>
                   <div className="space-y-2">
-                    {conversations.map((c) => (
-                      <button
-                        key={c.id}
-                        className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
-                          activeId === c.id
-                            ? "bg-primary/10 border border-primary/20 shadow-sm"
-                            : "hover:bg-background/80 border border-transparent"
-                        }`}
-                        onClick={() => setActiveId(c.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage
-                                src={c.avatar || "/placeholder.svg"}
-                              />
-                              <AvatarFallback
-                                className={`${
-                                  c.type === "group"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-green-100 text-green-700"
-                                }`}
-                              >
-                                {c.type === "group" ? (
-                                  <Users className="w-4 h-4" />
-                                ) : (
-                                  getConversationDisplayName(c)
-                                    .charAt(0)
-                                    .toUpperCase()
-                                )}
-                              </AvatarFallback>
-                            </Avatar>
-                            {c.type === "direct" && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-foreground truncate">
-                              {getConversationDisplayName(c)}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate mt-1">
-                              {c.lastMessage?.text || "No messages yet"}
-                            </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {c.lastMessage?.timestamp}
-                          </div>
+                    {userConversations.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-muted-foreground text-sm">
+                          No conversations yet
                         </div>
-                      </button>
-                    ))}
+                        <div className="text-muted-foreground text-xs mt-1">
+                          Start a new chat using the Direct or Groups tabs
+                        </div>
+                      </div>
+                    ) : (
+                      userConversations.map((c) => (
+                        <button
+                          key={c.id}
+                          className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                            activeId === c.id
+                              ? "bg-primary/10 border border-primary/20 shadow-sm"
+                              : "hover:bg-background/80 border border-transparent"
+                          }`}
+                          onClick={() => setActiveId(c.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage
+                                  src={c.avatar || "/placeholder.svg"}
+                                />
+                                <AvatarFallback
+                                  className={`${
+                                    c.type === "group"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-green-100 text-green-700"
+                                  }`}
+                                >
+                                  {c.type === "group" ? (
+                                    <Users className="w-4 h-4" />
+                                  ) : (
+                                    getConversationDisplayName(c)
+                                      .charAt(0)
+                                      .toUpperCase()
+                                  )}
+                                </AvatarFallback>
+                              </Avatar>
+                              {c.type === "direct" && (
+                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm text-foreground truncate">
+                                {getConversationDisplayName(c)}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate mt-1">
+                                {c.lastMessage?.text || "No messages yet"}
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {formatTimestamp(c.lastMessage?.createdAt)}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -549,21 +451,30 @@ export default function ChatPanel({
                       />
                       {loadingUsers ? (
                         <div className="flex items-center justify-center p-4">
-                          <div className="text-sm text-muted-foreground">Loading users...</div>
+                          <div className="text-sm text-muted-foreground">
+                            Loading users...
+                          </div>
                         </div>
                       ) : (
                         <div className="max-h-60 overflow-y-auto space-y-2">
                           {apiUsers
-                            .filter((user) =>
-                              user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                            .filter(
+                              (user) =>
+                                user.name
+                                  .toLowerCase()
+                                  .includes(searchQuery.toLowerCase()) ||
+                                user.email
+                                  .toLowerCase()
+                                  .includes(searchQuery.toLowerCase())
                             )
                             .map((user) => (
                               <div
                                 key={user.id}
                                 className="flex items-center gap-3 p-2 rounded hover:bg-background/80 transition-colors cursor-pointer"
                                 onClick={async () => {
-                                  const convId = await startDirectChatByAppId(user.id.toString());
+                                  const convId = await startDirectChatByAppId(
+                                    user.id.toString()
+                                  );
                                   setActiveId(convId);
                                   setShowUserSearch(false);
                                   setSearchQuery("");
@@ -571,12 +482,17 @@ export default function ChatPanel({
                               >
                                 <Avatar className="w-8 h-8">
                                   <AvatarFallback className="bg-muted text-xs">
-                                    {user.user_fname?.charAt(0).toUpperCase() || user.name.charAt(0).toUpperCase()}
+                                    {user.user_fname?.charAt(0).toUpperCase() ||
+                                      user.name.charAt(0).toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm truncate">{user.name}</div>
-                                  <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                                  <div className="font-medium text-sm truncate">
+                                    {user.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {user.email}
+                                  </div>
                                 </div>
                               </div>
                             ))}
@@ -586,9 +502,17 @@ export default function ChatPanel({
                   )}
 
                   <div className="space-y-2">
-                    {conversations
-                      .filter((c) => c.type === "direct")
-                      .map((c) => (
+                    {userDirectMessages.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-muted-foreground text-sm">
+                          No direct messages yet
+                        </div>
+                        <div className="text-muted-foreground text-xs mt-1">
+                          Click &ldquo;New Chat&rdquo; to start a conversation
+                        </div>
+                      </div>
+                    ) : (
+                      userDirectMessages.map((c) => (
                         <button
                           key={c.id}
                           className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
@@ -601,9 +525,13 @@ export default function ChatPanel({
                           <div className="flex items-center gap-3">
                             <div className="relative">
                               <Avatar className="w-10 h-10">
-                                <AvatarImage src={c.avatar || "/placeholder.svg"} />
+                                <AvatarImage
+                                  src={c.avatar || "/placeholder.svg"}
+                                />
                                 <AvatarFallback className="bg-green-100 text-green-700">
-                                  {getConversationDisplayName(c).charAt(0).toUpperCase()}
+                                  {getConversationDisplayName(c)
+                                    .charAt(0)
+                                    .toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-background rounded-full"></div>
@@ -617,11 +545,12 @@ export default function ChatPanel({
                               </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {c.lastMessage?.timestamp}
+                              {formatTimestamp(c.lastMessage?.createdAt)}
                             </div>
                           </div>
                         </button>
-                      ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -648,7 +577,9 @@ export default function ChatPanel({
                   {showUserSearch && (
                     <div className="space-y-3 bg-background/50 rounded-lg p-3 border border-border/30 shadow-sm w-[18rem]">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Create Group Chat</span>
+                        <span className="text-sm font-medium">
+                          Create Group Chat
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -662,14 +593,14 @@ export default function ChatPanel({
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
-                      
+
                       <Input
                         placeholder="Group name..."
                         value={groupName}
                         onChange={(e) => setGroupName(e.target.value)}
                         className="bg-background border-border/50"
                       />
-                      
+
                       <Input
                         placeholder="Search users to add..."
                         value={searchQuery}
@@ -679,7 +610,9 @@ export default function ChatPanel({
 
                       {selectedUsers.length > 0 && (
                         <div className="space-y-2">
-                          <div className="text-xs font-medium text-muted-foreground">Selected ({selectedUsers.length}):</div>
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Selected ({selectedUsers.length}):
+                          </div>
                           <div className="flex flex-wrap gap-1">
                             {selectedUsers.map((user) => (
                               <div
@@ -692,7 +625,11 @@ export default function ChatPanel({
                                   size="sm"
                                   className="h-4 w-4 p-0 hover:bg-primary/20"
                                   onClick={() => {
-                                    setSelectedUsers(selectedUsers.filter((u) => u.id !== user.id));
+                                    setSelectedUsers(
+                                      selectedUsers.filter(
+                                        (u) => u.id !== user.id
+                                      )
+                                    );
                                   }}
                                 >
                                   <X className="w-3 h-3" />
@@ -703,16 +640,27 @@ export default function ChatPanel({
                           <Button
                             size="sm"
                             onClick={async () => {
-                              if (!groupName.trim() || selectedUsers.length === 0) return;
-                              const memberIds = selectedUsers.map((u) => u.id.toString());
-                              const convId = await createGroupByAppIds(groupName, memberIds);
+                              if (
+                                !groupName.trim() ||
+                                selectedUsers.length === 0
+                              )
+                                return;
+                              const memberIds = selectedUsers.map((u) =>
+                                u.id.toString()
+                              );
+                              const convId = await createGroupByAppIds(
+                                groupName,
+                                memberIds
+                              );
                               setActiveId(convId);
                               setShowUserSearch(false);
                               setSearchQuery("");
                               setSelectedUsers([]);
                               setGroupName("");
                             }}
-                            disabled={!groupName.trim() || selectedUsers.length === 0}
+                            disabled={
+                              !groupName.trim() || selectedUsers.length === 0
+                            }
                             className="w-full"
                           >
                             Create Group ({selectedUsers.length} members)
@@ -722,15 +670,24 @@ export default function ChatPanel({
 
                       {loadingUsers ? (
                         <div className="flex items-center justify-center p-4">
-                          <div className="text-sm text-muted-foreground">Loading users...</div>
+                          <div className="text-sm text-muted-foreground">
+                            Loading users...
+                          </div>
                         </div>
                       ) : (
                         <div className="max-h-60 overflow-y-auto space-y-2">
                           {apiUsers
-                            .filter((user) =>
-                              (user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                               user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
-                              !selectedUsers.some((selected) => selected.id === user.id)
+                            .filter(
+                              (user) =>
+                                (user.name
+                                  .toLowerCase()
+                                  .includes(searchQuery.toLowerCase()) ||
+                                  user.email
+                                    .toLowerCase()
+                                    .includes(searchQuery.toLowerCase())) &&
+                                !selectedUsers.some(
+                                  (selected) => selected.id === user.id
+                                )
                             )
                             .map((user) => (
                               <div
@@ -742,12 +699,17 @@ export default function ChatPanel({
                               >
                                 <Avatar className="w-8 h-8">
                                   <AvatarFallback className="bg-muted text-xs">
-                                    {user.user_fname?.charAt(0).toUpperCase() || user.name.charAt(0).toUpperCase()}
+                                    {user.user_fname?.charAt(0).toUpperCase() ||
+                                      user.name.charAt(0).toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm truncate">{user.name}</div>
-                                  <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                                  <div className="font-medium text-sm truncate">
+                                    {user.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground truncate">
+                                    {user.email}
+                                  </div>
                                 </div>
                                 <Plus className="w-4 h-4 text-muted-foreground" />
                               </div>
@@ -758,9 +720,18 @@ export default function ChatPanel({
                   )}
 
                   <div className="space-y-2">
-                    {conversations
-                      .filter((c) => c.type === "group")
-                      .map((c) => (
+                    {userGroupChats.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-muted-foreground text-sm">
+                          No group chats yet
+                        </div>
+                        <div className="text-muted-foreground text-xs mt-1">
+                          Click &ldquo;Create Group&rdquo; to start a group
+                          conversation
+                        </div>
+                      </div>
+                    ) : (
+                      userGroupChats.map((c) => (
                         <button
                           key={c.id}
                           className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
@@ -773,7 +744,9 @@ export default function ChatPanel({
                           <div className="flex items-center gap-3">
                             <div className="relative">
                               <Avatar className="w-10 h-10">
-                                <AvatarImage src={c.avatar || "/placeholder.svg"} />
+                                <AvatarImage
+                                  src={c.avatar || "/placeholder.svg"}
+                                />
                                 <AvatarFallback className="bg-blue-100 text-blue-700">
                                   <Users className="w-4 h-4" />
                                 </AvatarFallback>
@@ -788,11 +761,12 @@ export default function ChatPanel({
                               </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {c.lastMessage?.timestamp}
+                              {formatTimestamp(c.lastMessage?.createdAt)}
                             </div>
                           </div>
                         </button>
-                      ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -884,7 +858,7 @@ export default function ChatPanel({
                             </div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {m.timestamp}
+                            {formatTimestamp(m.createdAt)}
                           </div>
                         </div>
                       </div>

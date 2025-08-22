@@ -4,34 +4,37 @@ import { adminAuth } from "@/lib/firebase-admin"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-async function getAppUserFromBackend(bearer: string) {
-  const res = await fetch("https://beta.ysn.tv/api/user", {
-    headers: { Authorization: `Bearer ${bearer}`, "Content-Type": "application/json" },
-    cache: "no-store",
-  })
-  if (!res.ok) return null
-  const json = await res.json()
-  const u = json?.data ?? json
-  if (!u?.id) return null
-  return { id: String(u.id), name: u.name ?? "User", email: u.email ?? null }
-}
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { userId, name, email, token } = body
 
-export async function GET(req: NextRequest) {
-  const h = req.headers.get("authorization") || ""
-  const token = h.startsWith("Bearer ") ? h.slice(7) : null
-  if (!token) return NextResponse.json({ error: "Missing token" }, { status: 401 })
+    console.log('Firebase token request for user:', { userId, name, email })
 
-  const appUser = await getAppUserFromBackend(token)
-  if (!appUser) return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    // Validate required fields
+    if (!userId || !token) {
+      console.log('Missing required fields:', { userId: !!userId, token: !!token })
+      return NextResponse.json({ error: "Missing userId or token" }, { status: 400 })
+    }
 
-  const uid = `app_${appUser.id}`
-  const customToken = await adminAuth.createCustomToken(uid, {
-    appUserId: appUser.id,
-    email: appUser.email || undefined,
-    name: appUser.name || undefined,
-  })
+    // Generate Firebase UID from app user ID
+    const uid = `app_${userId}`
+    console.log('Generated Firebase UID:', uid)
 
-  return NextResponse.json({ customToken })
+    // Create custom token with user data
+    const customToken = await adminAuth.createCustomToken(uid, {
+      appUserId: String(userId),
+      email: email || undefined,
+      name: name || undefined,
+    })
+
+    console.log('Custom token created successfully for UID:', uid)
+
+    return NextResponse.json({ customToken })
+  } catch (error) {
+    console.error('Error creating Firebase token:', error)
+    return NextResponse.json({ error: "Failed to create token" }, { status: 500 })
+  }
 }
 
 
