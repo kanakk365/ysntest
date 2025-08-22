@@ -7,12 +7,10 @@ import { AppSidebar } from "@/components/superAdmin/navigation/app-sidebar"
 import { DashboardTabs } from "@/components/superAdmin/dashboard/dashboard-tabs"
 import { SiteHeader } from "@/components/superAdmin/navigation/site-header"
 import ChatAuthGate from "@/components/chat/ChatAuthGate"
-import ChatPanel from "@/components/chat/ChatPanel"
-import { useChatStore } from "@/lib/chat-store"
+
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading, hydrated } = useAuthStore()
-  const { isOpen } = useChatStore()
   const router = useRouter()
 
   useEffect(() => {
@@ -69,15 +67,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        
-        {/* Floating Chat Panel */}
-        {isOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-            <div className="w-[90vw] max-w-4xl h-[80vh]">
-              <ChatPanel />
-            </div>
-          </div>
-        )}
       </div>
     </ChatAuthGate>
   )

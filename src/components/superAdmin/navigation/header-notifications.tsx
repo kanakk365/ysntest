@@ -9,12 +9,18 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import ChatPanel from "@/components/chat/ChatPanel"
+import { useChatStore } from "@/lib/chat-store"
 
 // Dummy notification data
 const notifications = [
@@ -60,49 +66,7 @@ const notifications = [
   },
 ]
 
-// Dummy message data
-const messages = [
-  {
-    id: 1,
-    sender: "Alex Thompson",
-    message: "Hey, are we still on for practice tomorrow?",
-    time: "5 minutes ago",
-    avatar: "/avatars/alex.jpg",
-    read: false,
-  },
-  {
-    id: 2,
-    sender: "Sarah Williams",
-    message: "The new training equipment has arrived. Can you check it out?",
-    time: "30 minutes ago",
-    avatar: "/avatars/sarah.jpg",
-    read: false,
-  },
-  {
-    id: 3,
-    sender: "Mike Johnson",
-    message: "Great game yesterday! The team really showed improvement.",
-    time: "2 hours ago",
-    avatar: "/avatars/mike.jpg",
-    read: true,
-  },
-  {
-    id: 4,
-    sender: "Lisa Chen",
-    message: "I've updated the tournament schedule. Please review when you get a chance.",
-    time: "4 hours ago",
-    avatar: "/avatars/lisa.jpg",
-    read: true,
-  },
-  {
-    id: 5,
-    sender: "David Park",
-    message: "Thanks for organizing the coaching session. Very helpful!",
-    time: "1 day ago",
-    avatar: "/avatars/david.jpg",
-    read: true,
-  },
-]
+
 
 export function NotificationIcon() {
   const unreadCount = notifications.filter(n => !n.read).length
@@ -170,10 +134,11 @@ export function NotificationIcon() {
 
 export function MessageIcon() {
   const unreadCount = 0
+  const { isOpen, openChat, closeChat, openChatWithUserId } = useChatStore()
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={(open) => (open ? openChat() : closeChat())}>
+      <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="relative cursor-pointer">
           <IconMessage className="size-5" />
           {unreadCount > 0 && (
@@ -185,19 +150,21 @@ export function MessageIcon() {
             </Badge>
           )}
         </Button>
-      </SheetTrigger>
-      <SheetContent className="w-[420px] sm:w-[520px] p-0">
-        <div className="border-b px-4 py-3 flex items-center gap-2">
-          <IconMessage className="size-5" />
-          <span className="font-medium">Messages</span>
-          {unreadCount > 0 && (
-            <Badge variant="secondary" className="ml-auto">{unreadCount} new</Badge>
-          )}
+      </DialogTrigger>
+      <DialogContent className="w-[90vw] max-w-none sm:max-w-none h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="border-b px-4 py-3 flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
+            <IconMessage className="size-5" />
+            Messages
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="ml-auto">{unreadCount} new</Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-hidden min-h-0">
+          <ChatPanel hideHeader openChatWithUserId={openChatWithUserId || undefined} />
         </div>
-        <div className="p-0">
-          <ChatPanel />
-        </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
