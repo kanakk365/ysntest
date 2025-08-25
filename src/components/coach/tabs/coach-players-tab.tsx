@@ -40,12 +40,16 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  MessageCircle,
 } from "lucide-react";
 import { FullScreenCalendar } from "@/components/coach/dashboard/full-screen-calendar";
 import { MyCalender } from "@/components/coach/dashboard/MyCalender";
 import { Event as ApiEvent } from "@/lib/api";
 import type { EventClickArg } from "@fullcalendar/core";
 import { format, startOfDay, endOfDay, eachHourOfInterval, isSameDay, add, sub } from "date-fns";
+import { startDirectChatByAppId } from "@/lib/chat-service";
+import { useChatStore } from "@/lib/chat-store";
+import { toast } from "sonner";
 
 interface Player {
   id: string;
@@ -146,6 +150,7 @@ export function CoachesTab() {
 
   const { events, loading: eventsLoading, error: eventsError, fetchEvents, createUpdateEvent, deleteEvent } = useEventsStore();
   const { user } = useAuthStore();
+  const { openChat } = useChatStore();
 
   // Add state for followed players
   const [followedPlayers, setFollowedPlayers] = useState<FollowedPlayerData[]>([]);
@@ -270,6 +275,24 @@ export function CoachesTab() {
       addPlayerLabel(playerId, newLabel.trim());
       setNewLabel("");
       setShowLabelDialog(false);
+    }
+  };
+
+  const handleMessagePlayer = async (player: Player) => {
+    try {
+      if (player.kids_user_id) {
+        const chatId = await startDirectChatByAppId(
+          player.kids_user_id,
+          player.fullName
+        );
+        openChat(chatId);
+        toast.success(`Chat opened with ${player.fullName}`);
+      } else {
+        toast.error("Unable to start chat - player ID not found");
+      }
+    } catch (error) {
+      console.error("Error starting chat:", error);
+      toast.error("Failed to start chat");
     }
   };
 
@@ -762,6 +785,15 @@ export function CoachesTab() {
                             disabled={followedPlayersLoading}
                           >
                             {followedPlayersLoading ? "Loading..." : (isPlayerFollowed(parseInt(player.id)) ? "Unfollow" : "Follow")}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMessagePlayer(player)}
+                          >
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Message
                           </Button>
                           
                           <Dialog

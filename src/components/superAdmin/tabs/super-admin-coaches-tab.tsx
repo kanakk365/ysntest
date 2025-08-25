@@ -30,11 +30,23 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Search, Edit, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Loader2,
+  AlertTriangle,
+  MessageCircle,
+} from "lucide-react";
 import { api, Coach, CoachType, CoachFormData } from "@/lib/api";
 import { toast } from "sonner";
+import { startDirectChatByAppId } from "@/lib/chat-service";
+import { useChatStore } from "@/lib/chat-store";
+import { auth } from "@/lib/firebase";
 
 export function SuperAdminCoachesTab() {
+  const { openChat } = useChatStore();
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [coachTypes, setCoachTypes] = useState<CoachType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,28 +130,31 @@ export function SuperAdminCoachesTab() {
     }
   };
 
-  const createFormData = (coachData: CoachFormData, isEdit = false): FormData => {
+  const createFormData = (
+    coachData: CoachFormData,
+    isEdit = false
+  ): FormData => {
     const formData = new FormData();
-    
+
     if (isEdit && coachData.coach_id) {
       formData.append("coach_id", coachData.coach_id);
     }
-    
+
     formData.append("org_id", coachData.org_id);
     formData.append("coach_fname", coachData.coach_fname);
     formData.append("coach_lname", coachData.coach_lname);
     formData.append("coach_email", coachData.coach_email);
     formData.append("coach_phone", coachData.coach_phone);
     formData.append("coach_type", coachData.coach_type);
-    
+
     if (coachData.coach_team_id) {
       formData.append("coach_team_id", coachData.coach_team_id);
     }
-    
+
     if (selectedFile) {
       formData.append("logo", selectedFile);
     }
-    
+
     return formData;
   };
 
@@ -154,7 +169,7 @@ export function SuperAdminCoachesTab() {
         setSubmitting(true);
         const formData = createFormData(newCoach);
         const response = await api.coaches.storeUpdate(formData);
-        
+
         if (response.status) {
           toast.success("Coach added successfully");
           setNewCoach({
@@ -187,19 +202,22 @@ export function SuperAdminCoachesTab() {
     if (editingCoach) {
       try {
         setSubmitting(true);
-        const formData = createFormData({
-          coach_id: editingCoach.coach_id.toString(),
-          org_id: "1",
-          coach_fname: editingCoach.coach_fname,
-          coach_lname: editingCoach.coach_lname,
-          coach_email: editingCoach.coach_email,
-          coach_phone: editingCoach.coach_phone,
-          coach_type: editingCoach.coach_type.toString(),
-          coach_team_id: "",
-        }, true);
-        
+        const formData = createFormData(
+          {
+            coach_id: editingCoach.coach_id.toString(),
+            org_id: "1",
+            coach_fname: editingCoach.coach_fname,
+            coach_lname: editingCoach.coach_lname,
+            coach_email: editingCoach.coach_email,
+            coach_phone: editingCoach.coach_phone,
+            coach_type: editingCoach.coach_type.toString(),
+            coach_team_id: "",
+          },
+          true
+        );
+
         const response = await api.coaches.storeUpdate(formData);
-        
+
         if (response.status) {
           toast.success("Coach updated successfully");
           setIsEditModalOpen(false);
@@ -219,7 +237,7 @@ export function SuperAdminCoachesTab() {
   };
 
   const handleDeleteCoach = async (hashId: string) => {
-    setDeletingCoach(coaches.find(c => c.coach_hash_id === hashId) || null);
+    setDeletingCoach(coaches.find((c) => c.coach_hash_id === hashId) || null);
     setIsDeleteModalOpen(true);
   };
 
@@ -245,8 +263,55 @@ export function SuperAdminCoachesTab() {
     }
   };
 
+  const handleMessageCoach = async (coach: Coach) => {
+    try {
+      console.log("Starting chat with coach:", coach);
+      console.log("Current Firebase user:", auth.currentUser);
+
+      if (!auth.currentUser) {
+        toast.error("You must be logged in to start a chat");
+        return;
+      }
+
+      if (coach.coach_id) {
+        console.log("Calling startDirectChatByAppId with:", coach.coach_id);
+
+        // Debug the UIDs that will be used
+        const targetUid = `app_${coach.coach_id}`;
+        const myUid = auth.currentUser.uid;
+        console.log("My UID:", myUid);
+        console.log("Target UID:", targetUid);
+        console.log("Expected memberIds:", [myUid, targetUid]);
+
+        const chatId = await startDirectChatByAppId(
+          coach.coach_id,
+          `${coach.coach_fname} ${coach.coach_lname}`
+        );
+        console.log("Chat created successfully:", chatId);
+
+        // Open the chat panel with the conversation
+        openChat(chatId);
+        toast.success(
+          `Chat opened with ${coach.coach_fname} ${coach.coach_lname}`
+        );
+      } else {
+        toast.error("Unable to start chat - coach ID not found");
+      }
+    } catch (error: unknown) {
+      console.error("Error starting chat:", error);
+      if (typeof error === "object" && error !== null) {
+        console.error("Error details:", {
+          code: (error as { code?: string }).code,
+          message: (error as { message?: string }).message,
+          stack: (error as { stack?: string }).stack,
+        });
+      }
+      toast.error("Failed to start chat");
+    }
+  };
+
   const getCoachTypeName = (typeId: number) => {
-    const coachType = coachTypes.find(type => type.id === typeId);
+    const coachType = coachTypes.find((type) => type.id === typeId);
     return coachType?.name || `Type ${typeId}`;
   };
 
@@ -321,7 +386,10 @@ export function SuperAdminCoachesTab() {
                           id="lastName"
                           value={newCoach.coach_lname}
                           onChange={(e) =>
-                            setNewCoach({ ...newCoach, coach_lname: e.target.value })
+                            setNewCoach({
+                              ...newCoach,
+                              coach_lname: e.target.value,
+                            })
                           }
                           placeholder="Last name"
                         />
@@ -334,7 +402,10 @@ export function SuperAdminCoachesTab() {
                         type="email"
                         value={newCoach.coach_email}
                         onChange={(e) =>
-                          setNewCoach({ ...newCoach, coach_email: e.target.value })
+                          setNewCoach({
+                            ...newCoach,
+                            coach_email: e.target.value,
+                          })
                         }
                         placeholder="Email address"
                       />
@@ -346,7 +417,10 @@ export function SuperAdminCoachesTab() {
                         type="tel"
                         value={newCoach.coach_phone}
                         onChange={(e) =>
-                          setNewCoach({ ...newCoach, coach_phone: e.target.value })
+                          setNewCoach({
+                            ...newCoach,
+                            coach_phone: e.target.value,
+                          })
                         }
                         placeholder="Mobile number"
                       />
@@ -357,7 +431,10 @@ export function SuperAdminCoachesTab() {
                         id="coachType"
                         value={newCoach.coach_type}
                         onChange={(e) =>
-                          setNewCoach({ ...newCoach, coach_type: e.target.value })
+                          setNewCoach({
+                            ...newCoach,
+                            coach_type: e.target.value,
+                          })
                         }
                         className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                       >
@@ -387,8 +464,8 @@ export function SuperAdminCoachesTab() {
                       >
                         Cancel
                       </Button>
-                      <Button 
-                        className="cursor-pointer" 
+                      <Button
+                        className="cursor-pointer"
                         onClick={handleAddCoach}
                         disabled={submitting}
                       >
@@ -455,8 +532,8 @@ export function SuperAdminCoachesTab() {
                       <Badge
                         variant={getStatusBadgeVariant(coach.coach_status)}
                         className={`cursor-pointer text-center w-16 justify-center ${
-                          coach.coach_status === 0 
-                            ? "bg-gray-600 text-gray-300 border-gray-300 hover:bg-gray-500" 
+                          coach.coach_status === 0
+                            ? "bg-gray-600 text-gray-300 border-gray-300 hover:bg-gray-500"
                             : ""
                         }`}
                       >
@@ -465,6 +542,15 @@ export function SuperAdminCoachesTab() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button
+                          className="cursor-pointer"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMessageCoach(coach)}
+                          title="Send Message"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
                         <Button
                           className="cursor-pointer"
                           variant="outline"
@@ -563,7 +649,10 @@ export function SuperAdminCoachesTab() {
                   type="email"
                   value={editingCoach.coach_email}
                   onChange={(e) =>
-                    setEditingCoach({ ...editingCoach, coach_email: e.target.value })
+                    setEditingCoach({
+                      ...editingCoach,
+                      coach_email: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -574,7 +663,10 @@ export function SuperAdminCoachesTab() {
                   type="tel"
                   value={editingCoach.coach_phone}
                   onChange={(e) =>
-                    setEditingCoach({ ...editingCoach, coach_phone: e.target.value })
+                    setEditingCoach({
+                      ...editingCoach,
+                      coach_phone: e.target.value,
+                    })
                   }
                 />
               </div>
@@ -616,8 +708,8 @@ export function SuperAdminCoachesTab() {
                 >
                   Cancel
                 </Button>
-                <Button 
-                  className="cursor-pointer" 
+                <Button
+                  className="cursor-pointer"
                   onClick={handleEditCoach}
                   disabled={submitting}
                 >
@@ -644,16 +736,26 @@ export function SuperAdminCoachesTab() {
             <DialogDescription>
               Are you sure you want to delete coach{" "}
               <span className="font-semibold">
-                {deletingCoach ? `${deletingCoach.coach_fname} ${deletingCoach.coach_lname}` : ""}
+                {deletingCoach
+                  ? `${deletingCoach.coach_fname} ${deletingCoach.coach_lname}`
+                  : ""}
               </span>
               ? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={deleting}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={deleting}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleting}
+            >
               {deleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -671,4 +773,4 @@ export function SuperAdminCoachesTab() {
       </Dialog>
     </div>
   );
-} 
+}

@@ -11,8 +11,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import ChatPanel from "@/components/chat/ChatPanel"
+import { useChatStore } from "@/lib/chat-store"
 
 // Dummy notification data
 const notifications = [
@@ -58,49 +66,7 @@ const notifications = [
   },
 ]
 
-// Dummy message data
-const messages = [
-  {
-    id: 1,
-    sender: "Alex Thompson",
-    message: "Hey, are we still on for practice tomorrow?",
-    time: "5 minutes ago",
-    avatar: "/avatars/alex.jpg",
-    read: false,
-  },
-  {
-    id: 2,
-    sender: "Sarah Williams",
-    message: "The new training equipment has arrived. Can you check it out?",
-    time: "30 minutes ago",
-    avatar: "/avatars/sarah.jpg",
-    read: false,
-  },
-  {
-    id: 3,
-    sender: "Mike Johnson",
-    message: "Great game yesterday! The team really showed improvement.",
-    time: "2 hours ago",
-    avatar: "/avatars/mike.jpg",
-    read: true,
-  },
-  {
-    id: 4,
-    sender: "Lisa Chen",
-    message: "I've updated the tournament schedule. Please review when you get a chance.",
-    time: "4 hours ago",
-    avatar: "/avatars/lisa.jpg",
-    read: true,
-  },
-  {
-    id: 5,
-    sender: "David Park",
-    message: "Thanks for organizing the coaching session. Very helpful!",
-    time: "1 day ago",
-    avatar: "/avatars/david.jpg",
-    read: true,
-  },
-]
+
 
 export function NotificationIcon() {
   const unreadCount = notifications.filter(n => !n.read).length
@@ -167,11 +133,12 @@ export function NotificationIcon() {
 }
 
 export function MessageIcon() {
-  const unreadCount = messages.filter(m => !m.read).length
+  const unreadCount = 0
+  const { isOpen, openChat, closeChat, openChatWithUserId } = useChatStore()
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={(open) => (open ? openChat() : closeChat())}>
+      <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="relative cursor-pointer">
           <IconMessage className="size-5" />
           {unreadCount > 0 && (
@@ -183,57 +150,21 @@ export function MessageIcon() {
             </Badge>
           )}
         </Button>
-      </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[500px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+      </DialogTrigger>
+      <DialogContent className="w-[90vw] max-w-none sm:max-w-none h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="border-b px-4 py-3 flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2">
             <IconMessage className="size-5" />
             Messages
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="ml-auto">
-                {unreadCount} new
-              </Badge>
+              <Badge variant="secondary" className="ml-auto">{unreadCount} new</Badge>
             )}
-          </SheetTitle>
-        </SheetHeader>
-        <div className="flex flex-col gap-3 mt-4">
-          {messages.map((message) => (
-            <Card key={message.id} className={`${message.read ? 'opacity-60' : ''} cursor-pointer hover:bg-accent/50 transition-colors`}>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={message.avatar} alt={message.sender} />
-                    <AvatarFallback>
-                      {message.sender.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium truncate">
-                        {message.sender}
-                        {!message.read && (
-                          <span className="ml-2 h-2 w-2 bg-primary rounded-full inline-block" />
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {message.time}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {message.message}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-hidden min-h-0">
+          <ChatPanel hideHeader openChatWithUserId={openChatWithUserId || undefined} />
         </div>
-        <div className="mt-4 pt-4 border-t">
-          <Button variant="outline" className="w-full">
-            View All Messages
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

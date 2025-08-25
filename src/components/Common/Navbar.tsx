@@ -11,10 +11,12 @@ import {
   Users,
   Newspaper,
   LogOut,
+  MessageCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { NavBar } from "./AnimatedNavbar";
 import { useAuthStore } from "@/lib/auth-store";
+import { useChatStore } from "@/lib/chat-store";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -25,6 +27,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import ChatPanel from "@/components/chat/ChatPanel";
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -34,6 +45,7 @@ export default function Navbar() {
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { isOpen, openChat, closeChat } = useChatStore();
 
   const handleLogout = async () => {
     await logout();
@@ -188,6 +200,42 @@ export default function Navbar() {
     );
   };
 
+  // Message Icon Component
+  const MessageIcon = () => {
+    const unreadCount = 0; // You can implement unread count logic here
+    
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => (open ? openChat() : closeChat())}>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative cursor-pointer text-white hover:text-purple-400 h-10 w-10">
+            <MessageCircle className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="w-[90vw] max-w-none sm:max-w-none h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="border-b px-4 py-3 flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="size-5" />
+              Messages
+              {unreadCount > 0 && (
+                <span className="ml-auto bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                  {unreadCount} new
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden min-h-0">
+            <ChatPanel hideHeader />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   // Desktop Auth Buttons
   const DesktopAuth = () => (
     <div className="flex items-center gap-4">
@@ -275,8 +323,35 @@ export default function Navbar() {
     </div>
   );
 
+  const MobileMessage = () => (
+    <div className="mt-6">
+      <Dialog open={isOpen} onOpenChange={(open) => (open ? openChat() : closeChat())}>
+        <DialogTrigger asChild>
+          <button 
+            className="flex items-center gap-3 rounded-full border border-purple-500/40 p-3 focus:outline-none w-full hover:bg-purple-700/20 transition"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <MessageCircle className="size-5 text-white" />
+            <span className="text-white text-sm">Messages</span>
+          </button>
+        </DialogTrigger>
+        <DialogContent className="w-[95vw] max-w-none h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="border-b px-4 py-3 flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="size-5" />
+              Messages
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden min-h-0">
+            <ChatPanel hideHeader />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+
   const MobileUserMenu = () => (
-    <div className="mt-10">
+    <div className="mt-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-3 rounded-full border border-purple-500/40 p-1 focus:outline-none">
@@ -334,6 +409,7 @@ export default function Navbar() {
       {/* Desktop Search and Auth */}
       <div className="flex items-center gap-4 z-50">
         <DesktopSearch />
+        {isAuthenticated && <MessageIcon />}
         {isAuthenticated ? <DesktopUserMenu /> : <DesktopAuth />}
       </div>
     </div>
@@ -458,7 +534,14 @@ export default function Navbar() {
                 exit={{ y: 20, opacity: 0 }}
                 transition={{ delay: 0.4, duration: 0.3 }}
               >
-                {isAuthenticated ? <MobileUserMenu /> : <MobileAuth />}
+                {isAuthenticated ? (
+                  <>
+                    <MobileMessage />
+                    <MobileUserMenu />
+                  </>
+                ) : (
+                  <MobileAuth />
+                )}
               </motion.div>
             </motion.div>
           </motion.div>

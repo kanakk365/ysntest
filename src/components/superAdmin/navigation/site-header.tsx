@@ -5,6 +5,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar-zustand"
 import { NavUser } from "@/components/superAdmin/navigation/nav-user"
 import { CoachProfilePopover } from "@/components/coach/navigation/coach-profile-popover"
 import { NotificationIcon, MessageIcon } from "@/components/superAdmin/navigation/header-notifications"
+// Removed ChatSearchButton from header
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuthStore } from "@/lib/auth-store"
 import { ThemeToggle } from "@/components/theme-toggle"
