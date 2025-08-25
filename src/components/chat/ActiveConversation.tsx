@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Hash, MessageCircle, Send, Users } from "lucide-react";
 import { Conversation, Message } from "./types";
 import { formatTimestamp } from "./types";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 interface ActiveConversationProps {
   activeConv: Conversation | null;
@@ -26,6 +29,65 @@ export function ActiveConversationArea({
   handleSendMessage,
   getConversationDisplayName,
 }: ActiveConversationProps) {
+  const [nameCache, setNameCache] = useState<Record<string, string>>({});
+
+  // Derive list of senderIds needing resolution (excluding self and ones already named)
+  useEffect(() => {
+    if (!activeConv) return;
+    const missingIds = new Set<string>();
+    messages.forEach((m) => {
+      if (m.senderId === uid) return;
+      if (m.senderName && m.senderName.trim() !== "") return;
+      if (nameCache[m.senderId]) return;
+      // If conversation already has a userNames mapping, prefer that
+      const convName = activeConv.userNames?.[m.senderId];
+      if (convName) {
+        missingIds.delete(m.senderId); // ensure not fetched
+        setNameCache((prev) => ({ ...prev, [m.senderId]: convName }));
+      } else {
+        missingIds.add(m.senderId);
+      }
+    });
+
+    if (missingIds.size === 0) return;
+    let cancelled = false;
+    (async () => {
+      for (const id of missingIds) {
+        try {
+          const ref = doc(db, "users", id);
+          const snap = await getDoc(ref);
+          if (!snap.exists()) continue;
+          const data = snap.data();
+          const resolved = (data?.displayName as string) || (data?.email as string) || id.replace("app_", "User ");
+          if (!cancelled) {
+            setNameCache((prev) => ({ ...prev, [id]: resolved }));
+          }
+        } catch {
+          // Silent fail; keep default fallback
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [messages, activeConv, uid, nameCache]);
+
+  const resolveSenderName = useCallback(
+    (m: Message): string => {
+      if (m.senderName && m.senderName.trim() !== "") return m.senderName;
+      if (activeConv?.userNames && activeConv.userNames[m.senderId])
+        return activeConv.userNames[m.senderId];
+      if (nameCache[m.senderId]) return nameCache[m.senderId];
+      // Derive simple placeholder from id while fetching
+      if (m.senderId.startsWith("app_")) {
+        const num = m.senderId.substring(4);
+        return `User ${num}`;
+      }
+      return "User";
+    },
+    [activeConv?.userNames, nameCache]
+  );
+
   if (!activeConv) {
     return (
       <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-background">
@@ -87,33 +149,36 @@ export function ActiveConversationArea({
       </div>
       <ScrollArea className="flex-1 min-h-0 p-6">
         <div className="space-y-4">
-          {messages.map((m) => (
-            <div key={m.id} className={`flex gap-3 ${m.senderId === uid ? "flex-row-reverse" : ""}`}>
-              {m.senderId !== uid && (
-                <Avatar className="w-8 h-8 flex-shrink-0">
-                  <AvatarImage src={m.avatar || "/placeholder.svg"} />
-                  <AvatarFallback className="bg-muted text-xs">
-                    {m.senderName?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <div className={`max-w-[75%] ${m.senderId === uid ? "items-end" : "items-start"} flex flex-col gap-1`}>
+          {messages.map((m) => {
+            const display = resolveSenderName(m);
+            return (
+              <div key={m.id} className={`flex gap-3 ${m.senderId === uid ? "flex-row-reverse" : ""}`}>
                 {m.senderId !== uid && (
-                  <div className="text-xs text-muted-foreground font-medium">{m.senderName || "Unknown"}</div>
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarImage src={m.avatar || "/placeholder.svg"} />
+                    <AvatarFallback className="bg-muted text-xs">
+                      {display.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 )}
-                <div
-                  className={`rounded-2xl px-4 py-3 shadow-sm ${
-                    m.senderId === uid
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-muted/50 border border-border/50 rounded-bl-md"
-                  }`}
-                >
-                  <div className="text-sm leading-relaxed">{m.text}</div>
+                <div className={`max-w-[75%] ${m.senderId === uid ? "items-end" : "items-start"} flex flex-col gap-1`}>
+                  {m.senderId !== uid && (
+                    <div className="text-xs text-muted-foreground font-medium">{display}</div>
+                  )}
+                  <div
+                    className={`rounded-2xl px-4 py-3 shadow-sm ${
+                      m.senderId === uid
+                        ? "bg-primary text-primary-foreground rounded-br-md"
+                        : "bg-muted/50 border border-border/50 rounded-bl-md"
+                    }`}
+                  >
+                    <div className="text-sm leading-relaxed">{m.text}</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">{formatTimestamp(m.createdAt)}</div>
                 </div>
-                <div className="text-xs text-muted-foreground">{formatTimestamp(m.createdAt)}</div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </ScrollArea>
       <div className="border-t border-border/50 p-4 bg-gradient-to-r from-muted/10 to-background flex-shrink-0">

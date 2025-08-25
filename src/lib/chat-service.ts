@@ -30,6 +30,19 @@ export async function startDirectChatByAppId(
   // Only ensure our own user exists (we can't create other users' documents)
   await ensureUserExists(myUid);
 
+  // Fetch the target user's displayName from Firebase
+  let displayName = targetUserName;
+  try {
+    const targetUserRef = doc(db, "users", targetUid);
+    const targetUserSnap = await getDoc(targetUserRef);
+    if (targetUserSnap.exists()) {
+      const userData = targetUserSnap.data();
+      displayName = userData?.displayName || targetUserName;
+    }
+  } catch (error) {
+    console.log("Could not fetch target user displayName, using fallback:", error);
+  }
+
   const id = directConvId(myUid, targetUid);
 
   const ref = doc(db, "conversations", id);
@@ -43,7 +56,7 @@ export async function startDirectChatByAppId(
       updatedAt: serverTimestamp(),
       lastMessage: null,
       // Store user names for display purposes
-      userNames: targetUserName ? { [targetUid]: targetUserName } : {},
+      userNames: displayName ? { [targetUid]: displayName } : {},
     };
 
     try {
@@ -52,16 +65,16 @@ export async function startDirectChatByAppId(
       throw error;
     }
   } else {
-    // If conversation exists and we have a target user name, update the userNames field
-    if (targetUserName) {
+    // If conversation exists and we have a display name, update the userNames field
+    if (displayName) {
       const existingData = snap.data();
       const currentUserNames = existingData?.userNames || {};
       
       // Only update if the name is not already stored or is different
-      if (!currentUserNames[targetUid] || currentUserNames[targetUid] !== targetUserName) {
+      if (!currentUserNames[targetUid] || currentUserNames[targetUid] !== displayName) {
         const updatedUserNames = {
           ...currentUserNames,
-          [targetUid]: targetUserName
+          [targetUid]: displayName
         };
         
         try {

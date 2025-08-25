@@ -61,8 +61,8 @@ export function ChatSidebar(props: ChatSidebarProps) {
     }
   };
 
-  const startDirect = async (userId: string) => {
-    const convId = await startDirectChatByAppId(userId);
+  const startDirect = async (user: ApiUser) => {
+    const convId = await startDirectChatByAppId(user.id.toString(), user.name);
     setActiveId(convId);
     setShowUserSearch(false);
     setSearchQuery("");
@@ -158,7 +158,7 @@ export function ChatSidebar(props: ChatSidebarProps) {
                   setShowUserSearch(false);
                   setSearchQuery("");
                 }}
-                onSelectUser={(u) => startDirect(u.id.toString())}
+                onSelectUser={(u) => startDirect(u)}
               />
             )}
             <div className="space-y-2">

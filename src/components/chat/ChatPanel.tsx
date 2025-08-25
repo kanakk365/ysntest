@@ -2,12 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { onSnapshot } from "firebase/firestore";
+import {
+  onSnapshot,
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import ChatAuthGate from "@/components/chat/ChatAuthGate";
 import { auth } from "@/lib/firebase";
 import { useChatStore } from "@/lib/chat-store";
 import { useAuthStore } from "@/lib/auth-store";
-import { conversationsFor, messagesFor, sendMessage, startDirectChatByAppId } from "@/lib/chat-service";
+import {
+  conversationsFor,
+  messagesFor,
+  sendMessage,
+  startDirectChatByAppId,
+} from "@/lib/chat-service";
 import { ChatHeader } from "./ChatHeader";
 import { ChatSidebar, ChatSidebarTab } from "./ChatSidebar";
 import { ActiveConversationArea } from "./ActiveConversation";
@@ -29,6 +41,10 @@ export default function ChatPanel({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState<ChatSidebarTab>("conversations");
+  // Track which conversation IDs we've attempted to enrich with user display names
+  const [enrichedConvIds, setEnrichedConvIds] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -142,6 +158,55 @@ export default function ChatPanel({
     }
     return "Direct Chat";
   };
+
+  // Enrich direct conversations missing the other user's displayName
+  useEffect(() => {
+    if (!uid || userConversations.length === 0) return;
+
+    const toEnrich = userConversations.filter((c) => {
+      if (c.type !== "direct") return false;
+      const otherUid = c.memberIds.find((m) => m !== uid);
+      if (!otherUid) return false;
+      if (c.userNames && c.userNames[otherUid]) return false; // already have name
+      if (enrichedConvIds.has(c.id)) return false; // already attempted
+      return true;
+    });
+
+    if (toEnrich.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      const newlyEnriched = new Set(enrichedConvIds);
+      for (const conv of toEnrich) {
+        const otherUid = conv.memberIds.find((m) => m !== uid);
+        if (!otherUid) continue;
+        newlyEnriched.add(conv.id);
+        try {
+          const userRef = doc(db, "users", otherUid);
+          const snap = await getDoc(userRef);
+          if (snap.exists()) {
+            const d = snap.data();
+            const displayName: string =
+              (d?.displayName as string) ||
+              (d?.email as string) ||
+              otherUid.replace("app_", "User ");
+            const convRef = doc(db, "conversations", conv.id);
+            await updateDoc(convRef, {
+              userNames: { ...(conv.userNames || {}), [otherUid]: displayName },
+              updatedAt: serverTimestamp(),
+            });
+          }
+        } catch (err) {
+          console.warn("Failed enriching conversation name", conv.id, err);
+        }
+      }
+      if (!cancelled) setEnrichedConvIds(newlyEnriched);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, userConversations, enrichedConvIds]);
 
   const handleSendMessage = async () => {
     const text = input.trim();
